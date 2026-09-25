@@ -4,6 +4,8 @@ import { ru } from "./ru";
 export const LOCALES = ["ru", "en"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "ru";
+/** Languages offered in the UI. Only Russian for now; add "en" to bring back the switcher. */
+export const ENABLED_LOCALES: readonly Locale[] = ["ru"];
 export const LOCALE_COOKIE = "lang";
 
 export const LOCALE_LABELS: Record<Locale, string> = { ru: "RU", en: "EN" };
@@ -29,11 +31,11 @@ export function hasTranslation(locale: Locale, key: string): boolean {
 
 export const isLocale = (value: unknown): value is Locale => (LOCALES as readonly unknown[]).includes(value);
 
-/** Reads the language from the `lang` cookie; Russian is the default. */
-export function localeFromCookie(cookieHeader: string | null): Locale {
+/** Reads the language from the `lang` cookie; languages that are not enabled fall back to Russian. */
+export function localeFromCookie(cookieHeader: string | null, enabled: readonly Locale[] = ENABLED_LOCALES): Locale {
   const match = cookieHeader?.match(/(?:^|;\s*)lang=([^;]+)/);
   const value = match?.[1];
-  return isLocale(value) ? value : DEFAULT_LOCALE;
+  return isLocale(value) && enabled.includes(value) ? value : DEFAULT_LOCALE;
 }
 
 /** Intl locale tag for dates and numbers. */

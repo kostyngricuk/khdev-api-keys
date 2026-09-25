@@ -36,8 +36,9 @@ export type SidebarProps = { role: UserRole; docsUrl: string; version: string };
 
 /** Wordmark: "KHDev" on the accent background like a logo, followed by "API Keys". */
 function Brand() {
+  const { t } = useI18n();
   return (
-    <Flex align="center" gap="2" px="3" pt="1" aria-label="KHDev API Keys" role="img">
+    <Flex align="center" gap="2" px="3" pt="1" aria-label={t("common.appName")} role="img">
       <Text
         size="2"
         weight="bold"
@@ -50,10 +51,10 @@ function Brand() {
           lineHeight: 1.3,
         }}
       >
-        KHDev
+        {t("common.brandMark")}
       </Text>
       <Text weight="bold" size="3">
-        API Keys
+        {t("common.brandName")}
       </Text>
     </Flex>
   );

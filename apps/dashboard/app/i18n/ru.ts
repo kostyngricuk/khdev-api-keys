@@ -3,6 +3,8 @@ import type { Dictionary } from "./en";
 export const ru: Dictionary = {
   common: {
     appName: "KHDev API Keys",
+    brandMark: "KHDev",
+    brandName: "API Keys",
     cancel: "Отмена",
     close: "Закрыть",
     save: "Сохранить",
@@ -206,8 +208,8 @@ export const ru: Dictionary = {
     expiredKeys: "Истёкшие ключи",
     activations: "Активации",
     activationsHint: "Домены, активированные за период",
-    newCustomers24h: "Новые клиенты за 24 ч",
-    newKeys24h: "Новые API-ключи за 24 ч",
+    newCustomers24h: "Новые клиенты",
+    newKeys24h: "Новые API-ключи",
     last24hHint: "Созданы за последние 24 часа",
     keysByPlatform: "Ключи по платформам",
     keysBySolution: "Ключи по решениям",

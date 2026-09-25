@@ -26,10 +26,11 @@ const config: Config = {
   baseUrl: "/",
   onBrokenLinks: "throw",
   future: { v4: true },
-  // Russian is the main language; English lives under /en/.
+  // Russian only for now. English texts are kept in i18n/en; add "en" to `locales` to publish them
+  // (the sidebar language switch appears automatically when there is more than one locale).
   i18n: {
     defaultLocale: "ru",
-    locales: ["ru", "en"],
+    locales: ["ru"],
     localeConfigs: {
       ru: { label: "Русский", htmlLang: "ru-RU" },
       en: { label: "English", htmlLang: "en-US" },

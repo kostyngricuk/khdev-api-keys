@@ -7,6 +7,7 @@ import { data, Form, Link, redirect, useNavigation } from "react-router";
 import { api, ApiError } from "~/lib/api.server";
 import { getUser, homePath } from "~/lib/auth.server";
 import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { ENABLED_LOCALES } from "~/i18n";
 import { useI18n } from "~/i18n/context";
 import { serverI18n } from "~/lib/i18n.server";
 import { pageTitle } from "~/lib/meta";
@@ -227,9 +228,11 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
 
   return (
     <Flex align="center" justify="center" p="4" style={{ minHeight: "100vh", position: "relative" }}>
-      <Box style={{ position: "absolute", top: 16, left: 16 }}>
-        <LanguageSwitcher />
-      </Box>
+      {ENABLED_LOCALES.length > 1 && (
+        <Box style={{ position: "absolute", top: 16, left: 16 }}>
+          <LanguageSwitcher />
+        </Box>
+      )}
       <Box style={{ width: "100%", maxWidth: 420 }}>
         <Flex direction="column" align="center" gap="2" mb="5">
           <Flex

@@ -5,13 +5,14 @@ import { Box, Button, Card, Code, Flex, Heading, Text, Theme } from "@radix-ui/t
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteLoaderData } from "react-router";
 import { DEFAULT_LOCALE, localeFromCookie } from "~/i18n";
 import { I18nProvider, useI18n } from "~/i18n/context";
+import { appTitle } from "~/lib/meta";
 import type { Route } from "./+types/root";
 
 export async function loader({ request }: Route.LoaderArgs) {
   return { locale: localeFromCookie(request.headers.get("Cookie")) };
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "KHDev API Keys" }];
+export const meta: Route.MetaFunction = ({ matches }) => appTitle(matches);
 
 export const links: Route.LinksFunction = () => [{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }];
 

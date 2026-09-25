@@ -333,5 +333,17 @@
   "theme.tags.tagsPageTitle": {
     "message": "Tags",
     "description": "The title of the tag list page"
+  },
+  "brand.mark": {
+    "message": "KHDev",
+    "description": "Wordmark part on the accent background"
+  },
+  "brand.name": {
+    "message": "API Keys",
+    "description": "Wordmark part after the mark"
+  },
+  "sidebar.language": {
+    "message": "Language",
+    "description": "Language switch label"
   }
 }

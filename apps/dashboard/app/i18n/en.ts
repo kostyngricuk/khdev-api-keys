@@ -1,6 +1,8 @@
 export const en = {
   common: {
     appName: "KHDev API Keys",
+    brandMark: "KHDev",
+    brandName: "API Keys",
     cancel: "Cancel",
     close: "Close",
     save: "Save",
@@ -205,8 +207,8 @@ export const en = {
     expiredKeys: "Expired keys",
     activations: "Activations",
     activationsHint: "Domains activated in the period",
-    newCustomers24h: "New customers (24h)",
-    newKeys24h: "New API keys (24h)",
+    newCustomers24h: "New customers",
+    newKeys24h: "New API keys",
     last24hHint: "Created in the last 24 hours",
     keysByPlatform: "Keys by platform",
     keysBySolution: "Keys by solution",

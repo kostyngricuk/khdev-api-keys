@@ -12,3 +12,10 @@ describe("pageTitle", () => {
     expect(pageTitle([undefined], "nav.support")).toEqual([{ title: "Поддержка · KHDev API Keys" }]);
   });
 });
+
+describe("appTitle", () => {
+  it("comes from the dictionary", async () => {
+    const { appTitle } = await import("~/lib/meta");
+    expect(appTitle([undefined])).toEqual([{ title: "KHDev API Keys" }]);
+  });
+});

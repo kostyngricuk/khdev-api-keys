@@ -43,9 +43,20 @@ describe("translate", () => {
   });
 });
 
+describe("ENABLED_LOCALES", () => {
+  it("only Russian is enabled", async () => {
+    const { ENABLED_LOCALES } = await import("~/i18n");
+    expect(ENABLED_LOCALES).toEqual(["ru"]);
+  });
+});
+
 describe("localeFromCookie", () => {
-  it("reads the lang cookie", () => {
-    expect(localeFromCookie("a=1; lang=en; b=2")).toBe("en");
+  it("reads the lang cookie when that language is enabled", () => {
+    expect(localeFromCookie("a=1; lang=en; b=2", ["ru", "en"])).toBe("en");
+  });
+
+  it("ignores a cookie for a language that is not enabled", () => {
+    expect(localeFromCookie("lang=en")).toBe("ru");
   });
 
   it("falls back to Russian for missing or unknown values", () => {

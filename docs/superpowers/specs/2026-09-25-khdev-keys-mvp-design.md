@@ -104,8 +104,9 @@ Tables:
 ### Languages and branding (added after the initial spec)
 
 - The product is called **KHDev API Keys**.
-- The dashboard is available in Russian (default) and English. A RU/EN switch sits on the left of the top bar
-  (and on the login screen); the choice is kept in the `lang` cookie. Dictionaries live in
+- The dashboard and docs are Russian-only for now; every UI string still goes through the translation
+  dictionaries. Enabling English (dashboard `ENABLED_LOCALES`, docs `i18n.locales`) brings back the language
+  switch (dashboard top bar and login; docs sidebar bottom); the choice is kept in the `lang` cookie. Dictionaries live in
   `apps/dashboard/app/i18n/{ru,en}.ts` and must have identical keys (enforced by a test).
 - Solution names are translated in the dashboard by slug (Personal Price → «Персональные скидки»); solutions
   without a translation show the database name. The Customers table shows a Solutions column and filter.

@@ -76,13 +76,12 @@ API tests run against an in-memory PostgreSQL (PGlite), so they need no database
 
 ## Languages
 
-The dashboard is in Russian by default, with English available from the RU/EN switch in the top bar.
-Texts live in `apps/dashboard/app/i18n/ru.ts` and `en.ts`; a test checks that both have the same keys.
+The dashboard and the docs are in Russian only for now. All UI strings still go through translations:
 
-The docs site is also Russian by default (`apps/docs/docs`) with English under `/en/`
-(`apps/docs/i18n/en`). The language switch and the docs version are at the bottom of the docs sidebar.
-`pnpm dev` serves one locale at a time; preview English with
-`pnpm --filter @khdev/docs exec docusaurus start --port 3002 --locale en`, or build and serve both.
+- Dashboard: `apps/dashboard/app/i18n/ru.ts` (and `en.ts`, kept in sync by a test). Add `"en"` to
+  `ENABLED_LOCALES` in `apps/dashboard/app/i18n/index.ts` to bring back the RU/EN switch in the top bar.
+- Docs: Russian pages in `apps/docs/docs`, English in `apps/docs/i18n/en`. Add `"en"` to `i18n.locales` in
+  `apps/docs/docusaurus.config.ts` to publish English and show the switch at the bottom of the sidebar.
 
 ## Versions and releases
 
