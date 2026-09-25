@@ -33,3 +33,16 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ NODE_ENV: "production", DATABASE_URL: base.DATABASE_URL })).toThrow();
   });
 });
+
+describe("loadConfig mail and rate limit options", () => {
+  it("defaults to SMTP and enables rate limiting outside tests", () => {
+    const config = loadConfig(base);
+    expect(config.mailTransport).toBe("smtp");
+    expect(config.rateLimitEnabled).toBe(true);
+    expect(loadConfig({ ...base, NODE_ENV: "test" }).rateLimitEnabled).toBe(false);
+  });
+
+  it("accepts the log mail transport", () => {
+    expect(loadConfig({ ...base, MAIL_TRANSPORT: "log" }).mailTransport).toBe("log");
+  });
+});

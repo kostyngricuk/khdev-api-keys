@@ -64,7 +64,7 @@ export async function buildApp(deps: AppDeps) {
   });
 
   await app.register(cors, { origin: config.corsOrigin ? config.corsOrigin.split(",") : false });
-  if (!config.isTest) {
+  if (config.rateLimitEnabled) {
     await app.register(rateLimit, {
       global: false,
       errorResponseBuilder: (_request, context) =>

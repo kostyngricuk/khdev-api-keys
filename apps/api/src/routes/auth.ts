@@ -1,3 +1,4 @@
+import type { FastifyRequest } from "fastify";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import {
   authUser,
@@ -10,7 +11,15 @@ import {
 import { requestLoginCode, verifyLoginCode } from "../services/auth.js";
 import { deleteSession } from "../services/sessions.js";
 
-const authRateLimit = { rateLimit: { max: 10, timeWindow: "1 minute" } };
+// The dashboard (BFF) makes every call from one server, so the limit is keyed by client IP and email.
+const authRateLimit = {
+  rateLimit: {
+    max: 10,
+    timeWindow: "1 minute",
+    hook: "preHandler" as const,
+    keyGenerator: (request: FastifyRequest) => `${request.ip}:${(request.body as { email?: string } | undefined)?.email ?? ""}`,
+  },
+};
 
 export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(

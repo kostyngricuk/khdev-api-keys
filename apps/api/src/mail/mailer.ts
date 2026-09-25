@@ -34,6 +34,15 @@ export function createSmtpMailer(config: Config): Mailer {
   };
 }
 
+/** Writes emails to the log instead of sending them (local development without Mailpit). */
+export function createLogMailer(log: { info: (obj: object, msg: string) => void }): Mailer {
+  return {
+    async send(message) {
+      log.info({ to: message.to, subject: message.subject, text: message.text }, "Email (MAIL_TRANSPORT=log)");
+    },
+  };
+}
+
 export type MemoryMailer = Mailer & { sent: MailMessage[]; clear(): void };
 
 /** Keeps messages in memory; used by tests. */

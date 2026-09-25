@@ -29,6 +29,8 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default("./uploads"),
   DEV_ADMIN_ENABLED: bool,
   CORS_ORIGIN: z.string().optional(),
+  MAIL_TRANSPORT: z.enum(["smtp", "log"]).default("smtp"),
+  RATE_LIMIT_ENABLED: z.enum(["true", "false", "1", "0"]).optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
   APP_VERSION: z.string().optional(),
   GIT_SHA: z.string().optional(),
@@ -64,6 +66,9 @@ export function loadConfig(env: Record<string, string | undefined>) {
     databaseUrl: e.DATABASE_URL,
     logLevel: e.LOG_LEVEL ?? (e.NODE_ENV === "test" ? "silent" : "info"),
     smtp: { host: e.SMTP_HOST, port: e.SMTP_PORT, secure: e.SMTP_SECURE, user: e.SMTP_USER, pass: e.SMTP_PASS },
+    mailTransport: e.MAIL_TRANSPORT,
+    rateLimitEnabled:
+      e.RATE_LIMIT_ENABLED === undefined ? e.NODE_ENV !== "test" : e.RATE_LIMIT_ENABLED === "true" || e.RATE_LIMIT_ENABLED === "1",
     mailFrom: e.MAIL_FROM,
     supportEmail: e.SUPPORT_EMAIL,
     dashboardUrl: e.DASHBOARD_URL.replace(/\/$/, ""),
