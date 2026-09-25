@@ -196,7 +196,7 @@ export const en = {
   ],
   dashboard: {
     title: "Dashboard",
-    description: "Totals and what happened in the last 24 hours.",
+    description: "Key numbers and recent changes",
   },
   stats: {
     title: "Statistics",

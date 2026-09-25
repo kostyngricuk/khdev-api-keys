@@ -197,7 +197,7 @@ export const ru: Dictionary = {
   ],
   dashboard: {
     title: "Дашборд",
-    description: "Итоги и что произошло за последние 24 часа.",
+    description: "Основная статистика и последние изменения",
   },
   stats: {
     title: "Статистика",
