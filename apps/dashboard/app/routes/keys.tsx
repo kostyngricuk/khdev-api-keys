@@ -60,7 +60,7 @@ function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUr
               >
                 <Flex justify="between" align="center" gap="3">
                   <Flex align="center" gap="2">
-                    <PlatformIcon platform={solution.platform} size={24} />
+                    <PlatformIcon platform={solution.platform} size={24} focusable={false} />
                     <Text size="2" weight="medium">
                       {solution.name}
                     </Text>
