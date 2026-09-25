@@ -15,6 +15,7 @@ import { authPlugin } from "./plugins/auth.js";
 import { authRoutes } from "./routes/auth.js";
 import { inviteRoutes } from "./routes/invites.js";
 import { keyRoutes } from "./routes/keys.js";
+import { pluginRoutes } from "./routes/plugin.js";
 import { systemRoutes } from "./routes/system.js";
 
 declare module "fastify" {
@@ -79,6 +80,7 @@ export async function buildApp(deps: AppDeps) {
       await api.register(authRoutes);
       await api.register(inviteRoutes);
       await api.register(keyRoutes);
+      await api.register(pluginRoutes);
     },
     { prefix: "/api" },
   );
