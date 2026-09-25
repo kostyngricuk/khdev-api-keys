@@ -11,7 +11,7 @@ sidebar_position: 2
 When you buy a plugin, we send an invitation to the email address you used for the purchase.
 The invitation contains:
 
-- a link to the KHDev Keys dashboard
+- a link to the KHDev API Keys dashboard
 - short instructions
 - a link to this documentation
 - a welcome video

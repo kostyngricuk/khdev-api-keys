@@ -1,28 +1,21 @@
 import { ChevronDownIcon, PaperPlaneIcon, QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 import { Box, Button, Card, Dialog, Flex, Heading, Select, Text, TextArea } from "@radix-ui/themes";
-import { SUPPORT_MAX_FILE_BYTES, SUPPORT_MAX_FILES, SUPPORT_TOPICS, type SupportTopic } from "@khdev/contracts";
+import { SUPPORT_MAX_FILE_BYTES, SUPPORT_MAX_FILES, SUPPORT_TOPICS } from "@khdev/contracts";
 import { Accordion } from "radix-ui";
 import { useState } from "react";
-import { data, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { PageHeader } from "~/components/PageHeader";
 import { useActionToast } from "~/components/Toaster";
-import { FAQS } from "~/content/faqs";
-import { runAction } from "~/lib/actions.server";
+import { useI18n } from "~/i18n/context";
+import { failAction, runAction } from "~/lib/actions.server";
 import type { ActionResult } from "~/lib/actions.server";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { bodyLimitError, SUPPORT_BODY_LIMIT } from "~/lib/body-limit";
+import { pageTitle } from "~/lib/meta";
 import type { Route } from "./+types/support";
 
-export const meta: Route.MetaFunction = () => [{ title: "Support · KHDev Keys" }];
-
-const TOPIC_LABELS: Record<SupportTopic, string> = {
-  installation: "Installation",
-  activation: "Key activation",
-  billing: "Billing",
-  bug: "Bug report",
-  other: "Other",
-};
+export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "support.title");
 
 const ACCEPT = ".png,.jpg,.jpeg,.pdf,.zip,.txt";
 
@@ -34,20 +27,21 @@ export async function loader({ request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ActionArgs) {
   await requireRole(request, "customer");
   const tooLarge = bodyLimitError(request, SUPPORT_BODY_LIMIT);
-  if (tooLarge) return data({ ok: false as const, error: tooLarge.error }, { status: tooLarge.status });
+  if (tooLarge) return failAction(request, tooLarge.code, tooLarge.status);
   const form = await request.formData();
   const body = new FormData();
   body.set("topic", String(form.get("topic") ?? ""));
   body.set("description", String(form.get("description") ?? ""));
   const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length > SUPPORT_MAX_FILES) {
-    return data({ ok: false as const, error: `Attach at most ${SUPPORT_MAX_FILES} files.` }, { status: 400 });
+    return failAction(request, "TOO_MANY_FILES", 400);
   }
   for (const file of files) body.append("files", file, file.name);
-  return runAction(() => api(request, "/support/tickets", { body }), "Thanks! We received your question and will reply by email.");
+  return runAction(request, () => api(request, "/support/tickets", { body }), "toast.ticketSent");
 }
 
 function AskQuestionDialog() {
+  const { t } = useI18n();
   const fetcher = useFetcher<ActionResult>();
   const [open, setOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -56,8 +50,8 @@ function AskQuestionDialog() {
 
   function checkFiles(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.currentTarget.files ?? []);
-    if (files.length > SUPPORT_MAX_FILES) setFileError(`Attach at most ${SUPPORT_MAX_FILES} files.`);
-    else if (files.some((f) => f.size > SUPPORT_MAX_FILE_BYTES)) setFileError("Each file must be 5 MB or smaller.");
+    if (files.length > SUPPORT_MAX_FILES) setFileError(t("support.tooManyFiles", { max: SUPPORT_MAX_FILES }));
+    else if (files.some((f) => f.size > SUPPORT_MAX_FILE_BYTES)) setFileError(t("support.fileTooLarge"));
     else setFileError(null);
   }
 
@@ -65,26 +59,26 @@ function AskQuestionDialog() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger>
         <Button>
-          <QuestionMarkCircledIcon /> Ask Question
+          <QuestionMarkCircledIcon /> {t("support.askQuestion")}
         </Button>
       </Dialog.Trigger>
       <Dialog.Content maxWidth="520px">
-        <Dialog.Title>Ask a question</Dialog.Title>
+        <Dialog.Title>{t("support.dialogTitle")}</Dialog.Title>
         <Dialog.Description size="2" mb="4">
-          We reply to your account email, usually within one business day.
+          {t("support.dialogDescription")}
         </Dialog.Description>
         <fetcher.Form method="post" encType="multipart/form-data">
           <Flex direction="column" gap="4">
             <Flex direction="column" gap="1">
               <Text as="label" size="2" weight="medium">
-                Topic
+                {t("support.topic")}
               </Text>
               <Select.Root name="topic" defaultValue="activation" required>
                 <Select.Trigger />
                 <Select.Content>
                   {SUPPORT_TOPICS.map((topic) => (
                     <Select.Item key={topic} value={topic}>
-                      {TOPIC_LABELS[topic]}
+                      {t(`topics.${topic}`)}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -92,7 +86,7 @@ function AskQuestionDialog() {
             </Flex>
             <label>
               <Text as="div" size="2" weight="medium" mb="1">
-                Description
+                {t("support.descriptionLabel")}
               </Text>
               <TextArea
                 name="description"
@@ -100,26 +94,26 @@ function AskQuestionDialog() {
                 minLength={10}
                 maxLength={5000}
                 rows={6}
-                placeholder="Describe the problem: platform, plugin version, what you expected and what happened."
+                placeholder={t("support.descriptionPlaceholder")}
               />
             </label>
             <label>
               <Text as="div" size="2" weight="medium" mb="1">
-                Attachments
+                {t("support.attachments")}
               </Text>
               <input type="file" name="files" multiple accept={ACCEPT} onChange={checkFiles} />
               <Text as="div" size="1" color={fileError ? "red" : "gray"} mt="1">
-                {fileError ?? `Up to ${SUPPORT_MAX_FILES} files, 5 MB each: PNG, JPEG, PDF, ZIP or TXT.`}
+                {fileError ?? t("support.attachmentsHint", { max: SUPPORT_MAX_FILES })}
               </Text>
             </label>
             <Flex gap="3" justify="end">
               <Dialog.Close>
-                <Button variant="soft" color="gray" type="button">
-                  Cancel
+                <Button variant="outline" color="gray" highContrast type="button">
+                  {t("common.cancel")}
                 </Button>
               </Dialog.Close>
               <Button type="submit" loading={busy} disabled={Boolean(fileError)}>
-                <PaperPlaneIcon /> Send
+                <PaperPlaneIcon /> {t("support.send")}
               </Button>
             </Flex>
           </Flex>
@@ -130,19 +124,20 @@ function AskQuestionDialog() {
 }
 
 export default function SupportPage() {
+  const { t, dict } = useI18n();
   return (
     <>
       <PageHeader
-        title="Support"
-        description="Answers to common questions. Didn't find yours? Ask us."
+        title={t("support.title")}
+        description={t("support.description")}
         actions={<AskQuestionDialog />}
       />
       <Card size="3" style={{ maxWidth: 820 }}>
         <Heading size="4" mb="2">
-          Frequently asked questions
+          {t("support.faqTitle")}
         </Heading>
         <Accordion.Root type="single" collapsible>
-          {FAQS.map((faq, index) => (
+          {dict.faq.map((faq, index) => (
             <Accordion.Item key={faq.question} value={`faq-${index}`} className="faq-item">
               <Accordion.Header asChild>
                 <h3 style={{ margin: 0 }}>

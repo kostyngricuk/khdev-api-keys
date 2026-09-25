@@ -14,11 +14,13 @@ import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { env } from "~/lib/env.server";
 import { parseFilters, toApiQuery } from "~/lib/filters";
+import { useI18n } from "~/i18n/context";
 import { formatDate, maskKey } from "~/lib/format";
+import { pageTitle } from "~/lib/meta";
 import { handleKeyAction } from "~/lib/key-actions.server";
 import type { Route } from "./+types/keys";
 
-export const meta: Route.MetaFunction = () => [{ title: "API Keys · KHDev Keys" }];
+export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "keys.title");
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "customer");
@@ -36,18 +38,18 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUrls: Record<Platform, string> }) {
+  const { t } = useI18n();
   return (
     <Dialog.Root>
       <Dialog.Trigger>
         <Button>
-          <PlusIcon /> Get a new key
+          <PlusIcon /> {t("keys.getNewKey")}
         </Button>
       </Dialog.Trigger>
       <Dialog.Content maxWidth="460px">
-        <Dialog.Title>Get a new key</Dialog.Title>
+        <Dialog.Title>{t("keys.getNewKey")}</Dialog.Title>
         <Dialog.Description size="2" mb="4">
-          A license key is created automatically after you buy a solution. Choose one to open its store page. The new key
-          appears on this page as soon as the purchase is confirmed.
+          {t("keys.getNewKeyDescription")}
         </Dialog.Description>
         <Flex direction="column" gap="2">
           {solutions.map((solution) => (
@@ -67,7 +69,7 @@ function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUr
                   </Flex>
                   <Flex align="center" gap="1">
                     <Text size="2" color="gray">
-                      Open store
+                      {t("keys.openStore")}
                     </Text>
                     <ExternalLinkIcon color="var(--gray-9)" />
                   </Flex>
@@ -78,8 +80,8 @@ function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUr
         </Flex>
         <Flex justify="end" mt="4">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
-              Close
+            <Button variant="outline" color="gray" highContrast>
+              {t("common.close")}
             </Button>
           </Dialog.Close>
         </Flex>
@@ -120,28 +122,29 @@ function KeyRow({ item }: { item: CustomerKey }) {
 }
 
 export default function KeysPage({ loaderData }: Route.ComponentProps) {
+  const { t } = useI18n();
   const { keys, filters, solutions, storeUrls } = loaderData;
   return (
     <>
       <PageHeader
-        title="API Keys"
-        description="Copy a key into your plugin settings. Each key works on up to its activation limit of domains."
+        title={t("keys.title")}
+        description={t("keys.description")}
         actions={<GetKeyDialog solutions={solutions} storeUrls={storeUrls} />}
       />
       <Filters filters={filters} statuses={KEY_STATUSES} solutions={solutions} />
       <Card>
         {keys.items.length === 0 ? (
-          <EmptyState title="No keys found" hint="Change the filters or get a new key." />
+          <EmptyState title={t("keys.emptyTitle")} hint={t("keys.emptyHint")} />
         ) : (
           <Table.Root>
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeaderCell>Key</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Solution</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Activations</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Expires</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colKey")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colSolution")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colStatus")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colActivations")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colCreated")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colExpires")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell />
               </Table.Row>
             </Table.Header>

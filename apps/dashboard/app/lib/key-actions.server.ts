@@ -1,6 +1,5 @@
-import { data } from "react-router";
 import { api } from "./api.server";
-import { runAction } from "./actions.server";
+import { failAction, runAction } from "./actions.server";
 
 /** Handles the KeyActions intents for both key tables. */
 export async function handleKeyAction(request: Request, options: { allowLimit: boolean }) {
@@ -10,25 +9,27 @@ export async function handleKeyAction(request: Request, options: { allowLimit: b
 
   switch (intent) {
     case "regenerate":
-      return runAction(() => api(request, `/keys/${id}/regenerate`, { method: "POST" }), "The key was regenerated");
+      return runAction(request, () => api(request, `/keys/${id}/regenerate`, { method: "POST" }), "toast.keyRegenerated");
     case "extend":
-      return runAction(() => api(request, `/keys/${id}/extend`, { method: "POST" }), "The key was extended");
+      return runAction(request, () => api(request, `/keys/${id}/extend`, { method: "POST" }), "toast.keyExtended");
     case "status": {
       const status = String(form.get("status"));
       return runAction(
+        request,
         () => api(request, `/keys/${id}/status`, { method: "PATCH", json: { status } }),
-        status === "active" ? "The key was activated" : "The key was deactivated",
+        status === "active" ? "toast.keyActivated" : "toast.keyDeactivated",
       );
     }
     case "limit":
       if (options.allowLimit) {
         const limit = Number(form.get("limit"));
         return runAction(
+          request,
           () => api(request, `/admin/keys/${id}/activation-limit`, { method: "PATCH", json: { limit } }),
-          "The activation limit was updated",
+          "toast.limitUpdated",
         );
       }
       break;
   }
-  return data({ ok: false as const, error: "Unknown action" }, { status: 400 });
+  return failAction(request, "UNKNOWN_ACTION", 400);
 }

@@ -1,13 +1,8 @@
 import type { Platform } from "@khdev/contracts";
+import { DEFAULT_LOCALE, translate, type Locale } from "~/i18n";
 
-export const PLATFORM_LABELS: Record<Platform, string> = {
-  bitrix: "1С-Битрикс",
-  wordpress: "WordPress",
-  opencart: "OpenCart",
-  shopify: "Shopify",
-};
-
-export const platformLabel = (platform: Platform) => PLATFORM_LABELS[platform];
+export const platformLabel = (platform: Platform, locale: Locale = DEFAULT_LOCALE) =>
+  translate(locale, `platform.${platform}`);
 
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -16,8 +11,6 @@ export function formatDate(iso: string | null | undefined): string {
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${dd}.${mm}.${date.getUTCFullYear()}`;
 }
-
-export const statusLabel = (status: string) => status.charAt(0).toUpperCase() + status.slice(1);
 
 export const avatarLetter = (email: string) => email.trim().charAt(0).toUpperCase() || "?";
 

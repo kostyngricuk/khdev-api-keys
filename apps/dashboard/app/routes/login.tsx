@@ -6,7 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { data, Form, Link, redirect, useNavigation } from "react-router";
 import { api, ApiError } from "~/lib/api.server";
 import { getUser, homePath } from "~/lib/auth.server";
-import { errorMessage } from "~/lib/errors";
+import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { useI18n } from "~/i18n/context";
+import { serverI18n } from "~/lib/i18n.server";
+import { pageTitle } from "~/lib/meta";
 import { createUserSession } from "~/lib/session.server";
 import type { Route } from "./+types/login";
 
@@ -20,7 +23,7 @@ type LoginState = {
   sentAt?: number;
 };
 
-export const meta: Route.MetaFunction = () => [{ title: "Sign in · KHDev Keys" }];
+export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "login.metaTitle");
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await getUser(request);
@@ -29,6 +32,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const { t, errorText } = serverI18n(request);
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   const email = String(form.get("email") ?? "").trim();
@@ -40,7 +44,7 @@ export async function action({ request }: Route.ActionArgs) {
         step: "code",
         email,
         sentAt: Date.now(),
-        notice: intent === "resend" ? "We sent you a new code." : undefined,
+        notice: intent === "resend" ? t("login.newCodeSent") : undefined,
       } satisfies LoginState;
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;
@@ -48,11 +52,11 @@ export async function action({ request }: Route.ActionArgs) {
         return {
           step: "code",
           email,
-          notice: "A code was sent less than a minute ago. Check your inbox.",
+          notice: t("login.codeAlreadySent"),
           sentAt: Date.now(),
         } satisfies LoginState;
       }
-      return data({ step: "email", email, error: errorMessage(error.code, error.message) } satisfies LoginState, {
+      return data({ step: "email", email, error: errorText(error.code, error.message) } satisfies LoginState, {
         status: error.status,
       });
     }
@@ -68,13 +72,13 @@ export async function action({ request }: Route.ActionArgs) {
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;
       const step = error.code === "USER_BLOCKED" || error.code === "USER_NOT_FOUND" ? "email" : "code";
-      return data({ step, email, error: errorMessage(error.code, error.message) } satisfies LoginState, {
+      return data({ step, email, error: errorText(error.code, error.message) } satisfies LoginState, {
         status: error.status,
       });
     }
   }
 
-  return data({ step: "email", email, error: "Unknown action" } satisfies LoginState, { status: 400 });
+  return data({ step: "email", email, error: errorText("UNKNOWN_ACTION") } satisfies LoginState, { status: 400 });
 }
 
 function useCountdown(sentAt: number | undefined) {
@@ -113,6 +117,7 @@ function Messages({ state }: { state: LoginState }) {
 }
 
 function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
+  const { t } = useI18n();
   return (
     <Form method="post">
       <input type="hidden" name="intent" value="request-code" />
@@ -120,7 +125,7 @@ function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
         <Messages state={state} />
         <label>
           <Text as="div" size="2" weight="medium" mb="1">
-            Email
+            {t("login.email")}
           </Text>
           <TextField.Root
             name="email"
@@ -129,7 +134,7 @@ function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
             required
             autoFocus
             autoComplete="email"
-            placeholder="you@company.com"
+            placeholder={t("login.emailPlaceholder")}
             defaultValue={state.email}
           >
             <TextField.Slot>
@@ -138,10 +143,10 @@ function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
           </TextField.Root>
         </label>
         <Button size="3" type="submit" loading={busy}>
-          Continue
+          {t("login.continue")}
         </Button>
         <Text size="1" color="gray" align="center">
-          Access is by invitation only. Use the email address from your invitation letter.
+          {t("login.inviteOnly")}
         </Text>
       </Flex>
     </Form>
@@ -149,6 +154,7 @@ function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
 }
 
 function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
+  const { t } = useI18n();
   const resendIn = useCountdown(state.sentAt);
   const firstDigit = useRef<HTMLInputElement>(null);
   // `autoFocus` only works on page load; the code step appears after a client-side submit.
@@ -159,7 +165,7 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
     <Flex direction="column" gap="4">
       <Messages state={state} />
       <Text size="2" color="gray">
-        We sent a 6-digit code to <Text weight="medium">{state.email}</Text>. It expires in 10 minutes.
+        {t("login.codeSentBefore")} <Text weight="medium">{state.email}</Text>. {t("login.codeSentAfter")}
       </Text>
       <Form method="post">
         <input type="hidden" name="intent" value="verify-code" />
@@ -167,7 +173,7 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
         <Flex direction="column" gap="4">
           <label>
             <Text as="div" size="2" weight="medium" mb="2">
-              Enter the 6-digit code
+              {t("login.enterCode")}
             </Text>
             <OneTimePasswordField.Root
               key={state.error ?? state.sentAt}
@@ -182,14 +188,14 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
                   key={i}
                   ref={i === 0 ? firstDigit : undefined}
                   className="otp-input"
-                  aria-label={`Digit ${i + 1}`}
+                  aria-label={t("login.digit", { n: i + 1 })}
                 />
               ))}
               <OneTimePasswordField.HiddenInput />
             </OneTimePasswordField.Root>
           </label>
           <Button size="3" type="submit" loading={busy}>
-            Sign in
+            {t("login.signIn")}
           </Button>
         </Flex>
       </Form>
@@ -197,7 +203,7 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
         <ThemeLink asChild size="2">
           <Link to={`/login?email=${encodeURIComponent(state.email)}`}>
             <Flex align="center" gap="1">
-              <ArrowLeftIcon /> Use another email
+              <ArrowLeftIcon /> {t("login.useAnotherEmail")}
             </Flex>
           </Link>
         </ThemeLink>
@@ -205,7 +211,7 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
           <input type="hidden" name="intent" value="resend" />
           <input type="hidden" name="email" value={state.email} />
           <Button type="submit" variant="ghost" size="2" disabled={resendIn > 0 || busy}>
-            {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+            {resendIn > 0 ? t("login.resendIn", { seconds: resendIn }) : t("login.resend")}
           </Button>
         </Form>
       </Flex>
@@ -214,12 +220,16 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
 }
 
 export default function Login({ loaderData, actionData }: Route.ComponentProps) {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const state: LoginState = (actionData as LoginState | undefined) ?? { step: "email", email: loaderData.email };
   const busy = navigation.state !== "idle";
 
   return (
-    <Flex align="center" justify="center" p="4" style={{ minHeight: "100vh" }}>
+    <Flex align="center" justify="center" p="4" style={{ minHeight: "100vh", position: "relative" }}>
+      <Box style={{ position: "absolute", top: 16, left: 16 }}>
+        <LanguageSwitcher />
+      </Box>
       <Box style={{ width: "100%", maxWidth: 420 }}>
         <Flex direction="column" align="center" gap="2" mb="5">
           <Flex
@@ -229,7 +239,9 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
           >
             <LockClosedIcon width={20} height={20} />
           </Flex>
-          <Heading size="6">Sign in to KHDev Keys</Heading>
+          <Heading size="6" align="center">
+            {t("login.title")}
+          </Heading>
         </Flex>
         <Card size="4">{state.step === "code" ? <CodeStep state={state} busy={busy} /> : <EmailStep state={state} busy={busy} />}</Card>
       </Box>

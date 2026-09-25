@@ -1,16 +1,16 @@
-import { CubeIcon } from "@radix-ui/react-icons";
 import { Tooltip } from "@radix-ui/themes";
 import type { Platform } from "@khdev/contracts";
+import { useI18n } from "~/i18n/context";
 import { PLATFORM_COLORS } from "~/lib/colors";
 import { platformLabel } from "~/lib/format";
 
 /**
- * One universal platform icon, tinted with the platform's brand color.
- * The platform name is shown in a tooltip on hover/focus and is the accessible label.
+ * One universal (bold cube) icon for every platform, drawn in the platform's brand color.
+ * The platform name is shown in a tooltip and is the accessible label.
  */
 export function PlatformIcon({
   platform,
-  size = 20,
+  size = 18,
   focusable = true,
 }: {
   platform: Platform;
@@ -18,27 +18,31 @@ export function PlatformIcon({
   /** Set false inside links/buttons, which already take focus. */
   focusable?: boolean;
 }) {
-  const label = platformLabel(platform);
+  const { locale } = useI18n();
+  const label = platformLabel(platform, locale);
   return (
     <Tooltip content={label}>
       <span
         role="img"
         aria-label={label}
         tabIndex={focusable ? 0 : undefined}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: size,
-          height: size,
-          borderRadius: 5,
-          background: PLATFORM_COLORS[platform],
-          color: "white",
-          flexShrink: 0,
-          cursor: "default",
-        }}
+        style={{ display: "inline-flex", flexShrink: 0, color: PLATFORM_COLORS[platform], cursor: "default" }}
       >
-        <CubeIcon width={size * 0.65} height={size * 0.65} aria-hidden />
+        <svg
+          viewBox="0 0 24 24"
+          width={size}
+          height={size}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M12 2.5 3.5 7v10l8.5 4.5 8.5-4.5V7z" />
+          <path d="M3.5 7 12 11.5 20.5 7" />
+          <path d="M12 11.5v10" />
+        </svg>
       </span>
     </Tooltip>
   );

@@ -11,12 +11,12 @@ describe("bodyLimitError", () => {
   it("rejects bodies over the limit before they are read", () => {
     expect(bodyLimitError(post({ "content-length": String(SUPPORT_BODY_LIMIT + 1) }), SUPPORT_BODY_LIMIT)).toEqual({
       status: 413,
-      error: "The upload is too large. Attach at most 3 files of 5 MB each.",
+      code: "UPLOAD_TOO_LARGE",
     });
   });
 
   it("rejects bodies without a length", () => {
-    expect(bodyLimitError(post({}), SUPPORT_BODY_LIMIT)?.status).toBe(411);
+    expect(bodyLimitError(post({}), SUPPORT_BODY_LIMIT)).toEqual({ status: 411, code: "UPLOAD_NO_LENGTH" });
   });
 
   it("allows 3 files of 5 MB plus the form fields", () => {

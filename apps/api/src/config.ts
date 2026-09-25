@@ -23,7 +23,7 @@ const envSchema = z.object({
   SMTP_SECURE: bool,
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  MAIL_FROM: z.string().default("KHDev Keys <no-reply@khdev.by>"),
+  MAIL_FROM: z.string().default("KHDev API Keys <no-reply@khdev.by>"),
   SUPPORT_EMAIL: z.email().default("support@khdev.by"),
   DASHBOARD_URL: z.url().default("http://localhost:3000"),
   DOCS_URL: z.url().default("http://localhost:3002"),

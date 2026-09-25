@@ -14,10 +14,13 @@ import { runAction, type ActionResult } from "~/lib/actions.server";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { parseFilters, toApiQuery } from "~/lib/filters";
+import { useI18n } from "~/i18n/context";
 import { formatDate } from "~/lib/format";
+import { serverI18n } from "~/lib/i18n.server";
+import { pageTitle } from "~/lib/meta";
 import type { Route } from "./+types/admin.customers";
 
-export const meta: Route.MetaFunction = () => [{ title: "Customers · KHDev Keys" }];
+export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "customers.title");
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "admin");
@@ -31,39 +34,43 @@ export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const id = encodeURIComponent(String(form.get("id") ?? ""));
   const status = String(form.get("status") ?? "");
+  const { t } = serverI18n(request);
   return runAction(
+    request,
     () => api(request, `/admin/customers/${id}/status`, { method: "PATCH", json: { status } }),
-    `The customer is now ${status}`,
+    "toast.customerStatus",
+    { status: t(`status.${status}`).toLowerCase() },
   );
 }
 
-type MenuItem = { status: UserStatus; label: string; color?: "amber" | "red" };
+type MenuItem = { status: UserStatus; labelKey: string; color?: "amber" | "red" };
 
 /** Status changes offered per current status; removed customers are final (invite the email again). */
 const ACTIONS: Record<Exclude<UserStatus, "removed">, MenuItem[]> = {
   inactive: [
-    { status: "active", label: "Activate" },
-    { status: "blocked", label: "Block", color: "amber" },
-    { status: "removed", label: "Remove", color: "red" },
+    { status: "active", labelKey: "customers.activate" },
+    { status: "blocked", labelKey: "customers.block", color: "amber" },
+    { status: "removed", labelKey: "customers.remove", color: "red" },
   ],
   active: [
-    { status: "inactive", label: "Deactivate" },
-    { status: "blocked", label: "Block", color: "amber" },
-    { status: "removed", label: "Remove", color: "red" },
+    { status: "inactive", labelKey: "customers.deactivate" },
+    { status: "blocked", labelKey: "customers.block", color: "amber" },
+    { status: "removed", labelKey: "customers.remove", color: "red" },
   ],
   blocked: [
-    { status: "active", label: "Unblock" },
-    { status: "removed", label: "Remove", color: "red" },
+    { status: "active", labelKey: "customers.unblock" },
+    { status: "removed", labelKey: "customers.remove", color: "red" },
   ],
 };
 
-const CONFIRM: Partial<Record<UserStatus, string>> = {
-  blocked: "The customer is signed out and cannot sign in. Their keys stop working in plugins.",
-  removed:
-    "The customer is signed out and will see “User not found” when signing in. Their keys stop working. This cannot be undone, but the email can be invited again.",
+/** Status changes that need a confirmation, with their dialog texts. */
+const CONFIRM: Partial<Record<UserStatus, { title: string; text: string; action: string }>> = {
+  blocked: { title: "customers.blockTitle", text: "customers.blockText", action: "customers.block" },
+  removed: { title: "customers.removeTitle", text: "customers.removeText", action: "customers.remove" },
 };
 
 function CustomerActions({ customer }: { customer: AdminCustomer }) {
+  const { t } = useI18n();
   const fetcher = useFetcher<ActionResult>();
   const [pending, setPending] = useState<UserStatus | null>(null);
   useActionToast(fetcher.data);
@@ -72,12 +79,13 @@ function CustomerActions({ customer }: { customer: AdminCustomer }) {
   const submit = (status: UserStatus) => fetcher.submit({ id: customer.id, status }, { method: "post" });
   const items = ACTIONS[customer.status];
   const firstDanger = items.findIndex((item) => item.color);
+  const confirm = pending ? CONFIRM[pending] : undefined;
 
   return (
     <>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
-          <IconButton variant="ghost" color="gray" aria-label={`Actions for ${customer.email}`} loading={fetcher.state !== "idle"}>
+          <IconButton variant="ghost" color="gray" aria-label={t("customers.actionsFor", { email: customer.email })} loading={fetcher.state !== "idle"}>
             <DotsHorizontalIcon />
           </IconButton>
         </DropdownMenu.Trigger>
@@ -89,7 +97,7 @@ function CustomerActions({ customer }: { customer: AdminCustomer }) {
                 color={item.color}
                 onSelect={() => (CONFIRM[item.status] ? setPending(item.status) : submit(item.status))}
               >
-                {item.label}
+                {t(item.labelKey)}
               </DropdownMenu.Item>
             </Fragment>
           ))}
@@ -97,19 +105,17 @@ function CustomerActions({ customer }: { customer: AdminCustomer }) {
       </DropdownMenu.Root>
       <AlertDialog.Root open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
         <AlertDialog.Content maxWidth="460px">
-          <AlertDialog.Title>
-            {pending === "removed" ? "Remove" : "Block"} {customer.email}?
-          </AlertDialog.Title>
-          <AlertDialog.Description size="2">{pending ? CONFIRM[pending] : null}</AlertDialog.Description>
+          <AlertDialog.Title>{confirm ? t(confirm.title, { email: customer.email }) : null}</AlertDialog.Title>
+          <AlertDialog.Description size="2">{confirm ? t(confirm.text) : null}</AlertDialog.Description>
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Cancel>
-              <Button variant="soft" color="gray">
-                Cancel
+              <Button variant="outline" color="gray" highContrast>
+                {t("common.cancel")}
               </Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action>
               <Button color={pending === "removed" ? "red" : "amber"} onClick={() => pending && submit(pending)}>
-                {pending === "removed" ? "Remove" : "Block"}
+                {confirm ? t(confirm.action) : null}
               </Button>
             </AlertDialog.Action>
           </Flex>
@@ -120,24 +126,25 @@ function CustomerActions({ customer }: { customer: AdminCustomer }) {
 }
 
 export default function CustomersPage({ loaderData }: Route.ComponentProps) {
+  const { t } = useI18n();
   const { customers, filters } = loaderData;
   return (
     <>
-      <PageHeader title="Customers" description="Invited customers and their status. Use the row menu to block or remove a customer." />
+      <PageHeader title={t("customers.title")} description={t("customers.description")} />
       <Filters filters={filters} statuses={USER_STATUSES} showEmail />
       <Card>
         {customers.items.length === 0 ? (
-          <EmptyState title="No customers found" hint="Change the filters to see more customers." />
+          <EmptyState title={t("customers.emptyTitle")} hint={t("customers.emptyHint")} />
         ) : (
           <Table.Root>
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Keys</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Platforms</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Invited</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Last sign-in</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colEmail")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colStatus")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colKeys")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colPlatforms")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colInvited")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colLastSignIn")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell />
               </Table.Row>
             </Table.Header>

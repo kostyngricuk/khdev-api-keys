@@ -1,5 +1,6 @@
 import { Box, Card, Flex, Heading, SegmentedControl, Table, Text } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
+import { useI18n } from "~/i18n/context";
 
 export type ChartRow = { label: string; value: number; color?: string };
 
@@ -17,6 +18,7 @@ export function ChartCard({
   valueLabel: string;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   const [view, setView] = useState<"chart" | "table">("chart");
   const mounted = useMounted();
   return (
@@ -31,8 +33,8 @@ export function ChartCard({
           )}
         </Box>
         <SegmentedControl.Root size="1" value={view} onValueChange={(v) => setView(v as "chart" | "table")}>
-          <SegmentedControl.Item value="chart">Chart</SegmentedControl.Item>
-          <SegmentedControl.Item value="table">Table</SegmentedControl.Item>
+          <SegmentedControl.Item value="chart">{t("stats.chart")}</SegmentedControl.Item>
+          <SegmentedControl.Item value="table">{t("stats.table")}</SegmentedControl.Item>
         </SegmentedControl.Root>
       </Flex>
       {view === "table" ? (

@@ -1,4 +1,4 @@
-# KHDev Keys
+# KHDev API Keys
 
 Invite-only admin panel for the license keys of KHDev solutions. Solutions live in the `solutions` table;
 the first one is **Personal Price** for 1С-Битрикс. Supported platforms: 1С-Битрикс, WordPress, OpenCart, Shopify.
@@ -73,6 +73,11 @@ Without Mailpit, set `MAIL_TRANSPORT=log` in `apps/api/.env` to print emails to 
 | `pnpm db:seed:dev` | Create the local admin and customer   |
 
 API tests run against an in-memory PostgreSQL (PGlite), so they need no database or Docker.
+
+## Languages
+
+The dashboard is in Russian by default, with English available from the RU/EN switch in the top bar.
+Texts live in `apps/dashboard/app/i18n/ru.ts` and `en.ts`; a test checks that both have the same keys.
 
 ## Versions and releases
 

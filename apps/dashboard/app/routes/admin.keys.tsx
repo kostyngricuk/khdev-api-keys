@@ -10,11 +10,13 @@ import { KeyStatusBadge } from "~/components/StatusBadge";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { parseFilters, toApiQuery } from "~/lib/filters";
+import { useI18n } from "~/i18n/context";
 import { formatDate } from "~/lib/format";
+import { pageTitle } from "~/lib/meta";
 import { handleKeyAction } from "~/lib/key-actions.server";
 import type { Route } from "./+types/admin.keys";
 
-export const meta: Route.MetaFunction = () => [{ title: "All API Keys · KHDev Keys" }];
+export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "adminKeys.title");
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "admin");
@@ -32,25 +34,26 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
+  const { t } = useI18n();
   const { keys, filters, solutions } = loaderData;
   return (
     <>
-      <PageHeader title="All API Keys" description="Every customer key. Keys are masked: only the first and last 4 characters are shown." />
+      <PageHeader title={t("adminKeys.title")} description={t("adminKeys.description")} />
       <Filters filters={filters} statuses={KEY_STATUSES} solutions={solutions} showEmail />
       <Card>
         {keys.items.length === 0 ? (
-          <EmptyState title="No keys found" hint="Change the filters to see more keys." />
+          <EmptyState title={t("keys.emptyTitle")} hint={t("adminKeys.emptyHint")} />
         ) : (
           <Table.Root>
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeaderCell>Key</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Customer</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Solution</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Activations</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Expires</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colKey")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colCustomer")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colSolution")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colStatus")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colActivations")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colCreated")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("keys.colExpires")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell />
               </Table.Row>
             </Table.Header>

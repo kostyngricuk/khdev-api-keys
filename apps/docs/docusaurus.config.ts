@@ -5,7 +5,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 const dashboardUrl = process.env.DASHBOARD_URL ?? "http://localhost:3000";
 
 const config: Config = {
-  title: "KHDev Keys",
+  title: "KHDev API Keys",
   tagline: "License keys for KHDev plugins",
   favicon: "img/favicon.svg",
   url: process.env.DOCS_URL ?? "http://localhost:3002",
@@ -35,8 +35,8 @@ const config: Config = {
   themeConfig: {
     colorMode: { respectPrefersColorScheme: true },
     navbar: {
-      title: "KHDev Keys",
-      logo: { alt: "KHDev Keys", src: "img/favicon.svg" },
+      title: "KHDev API Keys",
+      logo: { alt: "KHDev API Keys", src: "img/favicon.svg" },
       items: [{ href: dashboardUrl, label: "Open dashboard", position: "right" }],
     },
     footer: {

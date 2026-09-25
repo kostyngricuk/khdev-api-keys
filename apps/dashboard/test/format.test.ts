@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avatarLetter, formatDate, platformLabel, maskKey, statusLabel, versionLabel } from "~/lib/format";
+import { avatarLetter, formatDate, platformLabel, maskKey, versionLabel } from "~/lib/format";
 
 describe("formatDate", () => {
   it("formats ISO dates as DD.MM.YYYY in UTC", () => {
@@ -12,19 +12,15 @@ describe("formatDate", () => {
 });
 
 describe("platformLabel", () => {
-  it("uses the product names", () => {
+  it("uses the product names, in Russian by default", () => {
     expect(platformLabel("bitrix")).toBe("1С-Битрикс");
+    expect(platformLabel("bitrix", "en")).toBe("1C-Bitrix");
     expect(platformLabel("wordpress")).toBe("WordPress");
     expect(platformLabel("opencart")).toBe("OpenCart");
     expect(platformLabel("shopify")).toBe("Shopify");
   });
 });
 
-describe("statusLabel", () => {
-  it("capitalizes statuses", () => {
-    expect(statusLabel("inactive")).toBe("Inactive");
-  });
-});
 
 describe("avatarLetter", () => {
   it("uses the uppercase first letter of the email", () => {

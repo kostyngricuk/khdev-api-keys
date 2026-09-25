@@ -3,6 +3,7 @@ import { AlertDialog, Button, Dialog, DropdownMenu, Flex, IconButton, Text, Text
 import type { CustomerKey } from "@khdev/contracts";
 import { useState } from "react";
 import { useFetcher } from "react-router";
+import { useI18n } from "~/i18n/context";
 import type { ActionResult } from "~/lib/actions.server";
 import { useActionToast } from "./Toaster";
 
@@ -13,6 +14,7 @@ type Props = {
 
 /** Row actions shared by the customer and admin key tables. Each page's action handles the intents. */
 export function KeyActions({ keyItem, canEditLimit = false }: Props) {
+  const { t } = useI18n();
   const fetcher = useFetcher<ActionResult>();
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
@@ -26,27 +28,27 @@ export function KeyActions({ keyItem, canEditLimit = false }: Props) {
     <>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
-          <IconButton variant="ghost" color="gray" aria-label="Key actions" loading={busy}>
+          <IconButton variant="ghost" color="gray" aria-label={t("keyActions.menu")} loading={busy}>
             <DotsHorizontalIcon />
           </IconButton>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content align="end">
           {keyItem.status === "expired" ? (
-            <DropdownMenu.Item onSelect={() => submit("extend")}>Extend</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => submit("extend")}>{t("keyActions.extend")}</DropdownMenu.Item>
           ) : (
             <>
-              <DropdownMenu.Item onSelect={() => setConfirmRegenerate(true)}>Regenerate</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => setConfirmRegenerate(true)}>{t("keyActions.regenerate")}</DropdownMenu.Item>
               {keyItem.status === "active" ? (
-                <DropdownMenu.Item onSelect={() => submit("status", { status: "inactive" })}>Deactivate</DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => submit("status", { status: "inactive" })}>{t("keyActions.deactivate")}</DropdownMenu.Item>
               ) : (
-                <DropdownMenu.Item onSelect={() => submit("status", { status: "active" })}>Activate</DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => submit("status", { status: "active" })}>{t("keyActions.activate")}</DropdownMenu.Item>
               )}
             </>
           )}
           {canEditLimit && (
             <>
               <DropdownMenu.Separator />
-              <DropdownMenu.Item onSelect={() => setLimitOpen(true)}>Change activation limit</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => setLimitOpen(true)}>{t("keyActions.changeLimit")}</DropdownMenu.Item>
             </>
           )}
         </DropdownMenu.Content>
@@ -54,20 +56,19 @@ export function KeyActions({ keyItem, canEditLimit = false }: Props) {
 
       <AlertDialog.Root open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
         <AlertDialog.Content maxWidth="440px">
-          <AlertDialog.Title>Regenerate this key?</AlertDialog.Title>
+          <AlertDialog.Title>{t("keyActions.regenerateTitle")}</AlertDialog.Title>
           <AlertDialog.Description size="2">
-            The current key stops working on every site right away. The new key starts with {keyItem.activationLimit} free
-            activations.
+            {t("keyActions.regenerateText", { limit: keyItem.activationLimit })}
           </AlertDialog.Description>
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Cancel>
-              <Button variant="soft" color="gray">
-                Cancel
+              <Button variant="outline" color="gray" highContrast>
+                {t("common.cancel")}
               </Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action>
               <Button color="red" onClick={() => submit("regenerate")}>
-                Regenerate
+                {t("keyActions.regenerate")}
               </Button>
             </AlertDialog.Action>
           </Flex>
@@ -77,9 +78,9 @@ export function KeyActions({ keyItem, canEditLimit = false }: Props) {
       {canEditLimit && (
         <Dialog.Root open={limitOpen} onOpenChange={setLimitOpen}>
           <Dialog.Content maxWidth="400px">
-            <Dialog.Title>Activation limit</Dialog.Title>
+            <Dialog.Title>{t("keyActions.limitTitle")}</Dialog.Title>
             <Dialog.Description size="2" mb="3">
-              How many domains this key can be activated on. Used now: {keyItem.activationsUsed}.
+              {t("keyActions.limitText", { used: keyItem.activationsUsed })}
             </Dialog.Description>
             <fetcher.Form method="post">
               <input type="hidden" name="intent" value="limit" />
@@ -87,18 +88,18 @@ export function KeyActions({ keyItem, canEditLimit = false }: Props) {
               <Flex direction="column" gap="3">
                 <label>
                   <Text as="div" size="2" mb="1" weight="medium">
-                    Limit (1–100)
+                    {t("keyActions.limitLabel")}
                   </Text>
                   <TextField.Root name="limit" type="number" min={1} max={100} required defaultValue={keyItem.activationLimit} />
                 </label>
                 <Flex gap="3" justify="end">
                   <Dialog.Close>
-                    <Button variant="soft" color="gray" type="button">
-                      Cancel
+                    <Button variant="outline" color="gray" highContrast type="button">
+                      {t("common.cancel")}
                     </Button>
                   </Dialog.Close>
                   <Button type="submit" loading={busy}>
-                    Save
+                    {t("common.save")}
                   </Button>
                 </Flex>
               </Flex>

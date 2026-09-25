@@ -101,6 +101,14 @@ Tables:
 - Keys are shown masked to customers too; the copy button copies the full key. Status changes are made from
   the row menu (⋯) on key and customer tables.
 
+### Languages and branding (added after the initial spec)
+
+- The product is called **KHDev API Keys**.
+- The dashboard is available in Russian (default) and English. A RU/EN switch sits on the left of the top bar
+  (and on the login screen); the choice is kept in the `lang` cookie. Dictionaries live in
+  `apps/dashboard/app/i18n/{ru,en}.ts` and must have identical keys (enforced by a test).
+- Platforms are shown with one universal bold icon in the platform's brand color; the tooltip names the platform.
+
 ## 5. Business Rules
 
 ### 5.1 Users

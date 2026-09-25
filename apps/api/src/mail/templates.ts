@@ -16,7 +16,7 @@ function layout(title: string, body: string): string {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;padding:32px">
 <tr><td><h1 style="font-size:20px;margin:0 0 16px">${escapeHtml(title)}</h1>${body}
-<p style="color:#80838d;font-size:12px;margin-top:32px">KHDev Keys</p></td></tr></table></td></tr></table></body></html>`;
+<p style="color:#80838d;font-size:12px;margin-top:32px">KHDev API Keys</p></td></tr></table></td></tr></table></body></html>`;
 }
 
 const button = (href: string, label: string) =>
@@ -25,7 +25,7 @@ const button = (href: string, label: string) =>
 export function loginCodeEmail(to: string, code: string): MailMessage {
   return {
     to,
-    subject: `${code} is your KHDev Keys sign-in code`,
+    subject: `${code} is your KHDev API Keys sign-in code`,
     text: `Your sign-in code is ${code}. It expires in 10 minutes. If you did not try to sign in, ignore this email.`,
     html: layout(
       "Your sign-in code",
@@ -61,9 +61,9 @@ export function inviteEmail(to: string, purchased: PurchasedSolution[], links: I
     html: layout(
       "Your KHDev plugin license is ready",
       `<p>Thank you for your purchase (${escapeHtml(list)}).</p>
-<ol><li>Open the KHDev Keys dashboard.</li><li>Enter this email address and the 6-digit code we send you.</li>
+<ol><li>Open the KHDev API Keys dashboard.</li><li>Enter this email address and the 6-digit code we send you.</li>
 <li>Open <b>API Keys</b>, copy the key and paste it into the plugin settings.</li></ol>
-${button(links.loginUrl, "Open KHDev Keys")}
+${button(links.loginUrl, "Open KHDev API Keys")}
 <p>Documentation: <a href="${escapeHtml(links.docsUrl)}">${escapeHtml(links.docsUrl)}</a><br>
 Welcome video: <a href="${escapeHtml(links.videoUrl)}">${escapeHtml(links.videoUrl)}</a></p>`,
     ),
