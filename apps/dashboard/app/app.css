@@ -177,3 +177,27 @@ body {
     max-width: 40vw;
   }
 }
+
+/* ---- Pointer cursor on everything clickable ----------------------------- */
+
+/* Radix Themes defaults interactive controls to the arrow cursor; use the hand everywhere. */
+.radix-themes {
+  --cursor-button: pointer;
+  --cursor-checkbox: pointer;
+  --cursor-menu-item: pointer;
+  --cursor-radio: pointer;
+  --cursor-switch: pointer;
+  --cursor-slider-thumb: grab;
+  --cursor-slider-thumb-active: grabbing;
+}
+
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+select:not(:disabled),
+input[type="file"]:not(:disabled),
+input[type="file"]::file-selector-button,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
