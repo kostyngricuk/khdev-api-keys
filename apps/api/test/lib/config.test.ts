@@ -15,6 +15,7 @@ describe("loadConfig", () => {
     expect(config.port).toBe(3001);
     expect(config.isDev).toBe(true);
     expect(config.devAdminEnabled).toBe(false);
+    expect(config.databasePoolMax).toBe(10);
   });
 
   it("enables the dev admin in development", () => {

@@ -7,8 +7,8 @@ export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 export type Executor = Database | Transaction;
 
-export function createDatabase(url: string) {
-  const client = postgres(url, { max: 10 });
+export function createDatabase(url: string, poolMax = 10) {
+  const client = postgres(url, { max: poolMax });
   const db = drizzle(client, { schema }) as unknown as Database;
   return { db, close: () => client.end() };
 }

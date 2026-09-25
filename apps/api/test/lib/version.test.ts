@@ -12,12 +12,16 @@ describe("resolveVersions", () => {
   });
 
   it("falls back to a dev version", () => {
-    const v = resolveVersions({}, () => null);
+    const v = resolveVersions({}, { describe: () => null, sha: () => null });
     expect(v.api).toBe("0.0.0-dev");
     expect(v.commit).toBe("unknown");
   });
 
   it("falls back to git describe when APP_VERSION is missing", () => {
-    expect(resolveVersions({}, () => "v1.4.0-3-gdeadbee").api).toBe("1.4.0-3-gdeadbee");
+    expect(resolveVersions({}, { describe: () => "v1.4.0-3-gdeadbee", sha: () => null }).api).toBe("1.4.0-3-gdeadbee");
+  });
+
+  it("reads the commit from git when GIT_SHA is missing", () => {
+    expect(resolveVersions({}, { describe: () => null, sha: () => "331c054" }).commit).toBe("331c054");
   });
 });

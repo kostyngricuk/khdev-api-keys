@@ -4,7 +4,7 @@ import { createDatabase } from "./db/client.js";
 import { createLogMailer, createSmtpMailer, type Mailer } from "./mail/mailer.js";
 
 const config = loadConfig(process.env);
-const { db, close } = createDatabase(config.databaseUrl);
+const { db, close } = createDatabase(config.databaseUrl, config.databasePoolMax);
 let logMail: Mailer["send"] = async () => {};
 const mailer: Mailer =
   config.mailTransport === "log" ? { send: (message) => logMail(message) } : createSmtpMailer(config);
