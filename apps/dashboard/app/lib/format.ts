@@ -22,3 +22,6 @@ export const statusLabel = (status: string) => status.charAt(0).toUpperCase() + 
 export const avatarLetter = (email: string) => email.trim().charAt(0).toUpperCase() || "?";
 
 export const versionLabel = (version: string) => `v${version.replace(/^v/, "")}`;
+
+/** Keys are never shown in full; the copy button copies the whole value. */
+export const maskKey = (key: string) => `${key.slice(0, 4)}…${key.slice(-4)}`;

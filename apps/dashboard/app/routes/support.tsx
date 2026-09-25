@@ -11,6 +11,7 @@ import { runAction } from "~/lib/actions.server";
 import type { ActionResult } from "~/lib/actions.server";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
+import { bodyLimitError, SUPPORT_BODY_LIMIT } from "~/lib/body-limit";
 import type { Route } from "./+types/support";
 
 export const meta: Route.MetaFunction = () => [{ title: "Support · KHDev Keys" }];
@@ -32,6 +33,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   await requireRole(request, "customer");
+  const tooLarge = bodyLimitError(request, SUPPORT_BODY_LIMIT);
+  if (tooLarge) return data({ ok: false as const, error: tooLarge.error }, { status: tooLarge.status });
   const form = await request.formData();
   const body = new FormData();
   body.set("topic", String(form.get("topic") ?? ""));

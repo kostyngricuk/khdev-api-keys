@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avatarLetter, formatDate, platformLabel, statusLabel, versionLabel } from "~/lib/format";
+import { avatarLetter, formatDate, platformLabel, maskKey, statusLabel, versionLabel } from "~/lib/format";
 
 describe("formatDate", () => {
   it("formats ISO dates as DD.MM.YYYY in UTC", () => {
@@ -38,5 +38,11 @@ describe("versionLabel", () => {
     expect(versionLabel("1.2.0")).toBe("v1.2.0");
     expect(versionLabel("v1.2.0")).toBe("v1.2.0");
     expect(versionLabel("0.0.0-dev")).toBe("v0.0.0-dev");
+  });
+});
+
+describe("maskKey", () => {
+  it("shows only the first and last four characters", () => {
+    expect(maskKey("A1B2-C3D4-E5F6-0789-0FZL-0G3K")).toBe("A1B2…0G3K");
   });
 });

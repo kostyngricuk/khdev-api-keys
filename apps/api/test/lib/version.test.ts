@@ -12,16 +12,28 @@ describe("resolveVersions", () => {
   });
 
   it("falls back to a dev version", () => {
-    const v = resolveVersions({}, { describe: () => null, sha: () => null });
+    const v = resolveVersions({}, { describe: () => null, sha: () => null, buildInfo: () => null });
     expect(v.api).toBe("0.0.0-dev");
     expect(v.commit).toBe("unknown");
   });
 
   it("falls back to git describe when APP_VERSION is missing", () => {
-    expect(resolveVersions({}, { describe: () => "v1.4.0-3-gdeadbee", sha: () => null }).api).toBe("1.4.0-3-gdeadbee");
+    expect(resolveVersions({}, { describe: () => "v1.4.0-3-gdeadbee", sha: () => null, buildInfo: () => null }).api).toBe("1.4.0-3-gdeadbee");
   });
 
   it("reads the commit from git when GIT_SHA is missing", () => {
-    expect(resolveVersions({}, { describe: () => null, sha: () => "331c054" }).commit).toBe("331c054");
+    expect(resolveVersions({}, { describe: () => null, sha: () => "331c054", buildInfo: () => null }).commit).toBe("331c054");
+  });
+
+  it("uses the build info written by the release workflow when the env has no version", () => {
+    const v = resolveVersions(
+      {},
+      {
+        describe: () => "v9.9.9",
+        sha: () => "ignored",
+        buildInfo: () => ({ version: "v2.1.0", commit: "abc1234", builtAt: "2026-10-01T00:00:00Z" }),
+      },
+    );
+    expect(v).toEqual({ api: "2.1.0", dashboard: "2.1.0", docs: "2.1.0", commit: "abc1234", builtAt: "2026-10-01T00:00:00Z" });
   });
 });

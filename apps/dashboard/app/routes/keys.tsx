@@ -13,7 +13,7 @@ import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { env } from "~/lib/env.server";
 import { parseFilters, toApiQuery } from "~/lib/filters";
-import { formatDate } from "~/lib/format";
+import { formatDate, maskKey } from "~/lib/format";
 import { handleKeyAction } from "~/lib/key-actions.server";
 import type { Route } from "./+types/keys";
 
@@ -80,7 +80,7 @@ function KeyRow({ item }: { item: CustomerKey }) {
       <Table.RowHeaderCell>
         <Flex align="center" gap="2">
           <Text size="2" className="key-mono">
-            {item.key}
+            {maskKey(item.key)}
           </Text>
           <CopyButton value={item.key} />
         </Flex>
