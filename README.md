@@ -79,6 +79,11 @@ API tests run against an in-memory PostgreSQL (PGlite), so they need no database
 The dashboard is in Russian by default, with English available from the RU/EN switch in the top bar.
 Texts live in `apps/dashboard/app/i18n/ru.ts` and `en.ts`; a test checks that both have the same keys.
 
+The docs site is also Russian by default (`apps/docs/docs`) with English under `/en/`
+(`apps/docs/i18n/en`). The language switch and the docs version are at the bottom of the docs sidebar.
+`pnpm dev` serves one locale at a time; preview English with
+`pnpm --filter @khdev/docs exec docusaurus start --port 3002 --locale en`, or build and serve both.
+
 ## Versions and releases
 
 Versions come from git tags. Pushing a tag such as `v1.2.0` runs `.github/workflows/release.yml`, which builds every

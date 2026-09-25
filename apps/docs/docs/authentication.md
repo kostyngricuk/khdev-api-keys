@@ -1,43 +1,42 @@
 ---
 id: authentication
-title: Authentication
+title: Авторизация
 sidebar_position: 2
 ---
 
-# Authentication
+# Авторизация
 
-## The invitation
+## Приглашение
 
-When you buy a plugin, we send an invitation to the email address you used for the purchase.
-The invitation contains:
+После покупки мы отправляем приглашение на email, указанный при покупке. В письме:
 
-- a link to the KHDev API Keys dashboard
-- short instructions
-- a link to this documentation
-- a welcome video
+- ссылка на дашборд KHDev API Keys
+- короткая инструкция
+- ссылка на эту документацию
+- приветственное видео
 
-If you buy another plugin later, you get an email saying that a new key was added to your account.
+Если позже вы купите ещё одно решение, придёт письмо о том, что в аккаунт добавлен новый ключ.
 
-## Signing in
+## Вход
 
-1. Open the dashboard link from the invitation.
-2. Enter your email address and select **Continue**.
-3. Check your inbox for a **6-digit code**. The code is valid for 10 minutes.
-4. Enter the code. You are signed in.
+1. Откройте ссылку на дашборд из приглашения.
+2. Введите свой email и нажмите **Продолжить**.
+3. Проверьте почту: придёт **6-значный код**. Он действует 10 минут.
+4. Введите код — вы вошли.
 
-You can request a new code after one minute. After 5 wrong attempts the code stops working and you need a new one.
+Новый код можно запросить через минуту. После 5 неверных попыток код перестаёт работать, и нужно запросить новый.
 
-## Signing out
+## Выход
 
-Select the exit icon next to your email in the top-right corner.
+Нажмите на иконку выхода рядом с вашим email в правом верхнем углу.
 
-## When you cannot sign in
+## Если не получается войти
 
-| Message                  | What it means                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| User not found           | The email was not invited, or the account was removed. Use the email from your invitation. |
-| Your account is blocked  | An administrator blocked the account. No code is sent. Contact support.               |
-| The code has expired     | More than 10 minutes passed. Request a new code.                                      |
-| Too many wrong attempts  | Request a new code.                                                                   |
+| Сообщение                         | Что это значит                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| Пользователь не найден            | Этот email не приглашали, или аккаунт удалён. Укажите email из приглашения.                 |
+| Ваш аккаунт заблокирован          | Администратор заблокировал аккаунт. Код не отправляется. Обратитесь в поддержку.           |
+| Срок действия кода истёк          | Прошло больше 10 минут. Запросите новый код.                                                |
+| Слишком много неверных попыток    | Запросите новый код.                                                                        |
 
-A removed account can be invited again. It then starts as a new account.
+Удалённый аккаунт можно пригласить снова — тогда он будет создан как новый.

@@ -1,44 +1,45 @@
 ---
 id: get-started
-title: Get Started
+title: Начало работы
 sidebar_position: 3
 ---
 
-# Get Started
+# Начало работы
 
-## 1. Copy your key
+## 1. Скопируйте ключ
 
-1. Sign in to the dashboard.
-2. Open **API Keys** in the left menu.
-3. Find the key for your platform and select the copy icon next to it.
+1. Войдите в дашборд.
+2. Откройте **API-ключи** в меню слева.
+3. Найдите ключ нужного решения и нажмите на иконку копирования рядом с ним.
 
-Use the filters above the table (dates, platform, status) to find a key quickly.
+Фильтры над таблицей (даты, решение, платформа, статус) помогают быстро найти ключ.
 
-## 2. Activate the plugin
+## 2. Активируйте решение
 
-1. Open the plugin settings on your site.
-2. Paste the key into the license field and save.
+1. Откройте настройки решения на своём сайте.
+2. Вставьте ключ в поле лицензии и сохраните.
 
-The plugin checks the key and activates it for your domain. `www.shop.com`, `shop.com` and
-`https://shop.com/admin` count as the same domain.
+Решение проверит ключ и активирует его для вашего домена. `www.shop.com`, `shop.com` и
+`https://shop.com/admin` считаются одним доменом.
 
-## 3. Keep an eye on activations
+## 3. Следите за активациями
 
-The **Activations** column shows how many domains use the key, for example `2 / 3`.
-When all activations are used, the key cannot be activated on another domain.
+В колонке **Активации** видно, сколько доменов использует ключ, например `2 / 3`.
+Когда все активации заняты, ключ нельзя активировать на новом домене.
 
-To move the plugin to a new site:
+Чтобы перенести решение на новый сайт:
 
-1. Select **Regenerate** in the key's menu.
-2. Paste the new key into the plugin on each site where you want to use it.
+1. Выберите **Перевыпустить** в меню ключа.
+2. Вставьте новый ключ в решение на каждом сайте, где вы хотите его использовать.
 
-The old key stops working right away, and the new key starts with all activations free.
+Старый ключ сразу перестаёт работать, а у нового все активации свободны.
 
-## 4. Extend an expired key
+## 4. Продлите истёкший ключ
 
-When a key expires, the plugin stops working. Select **Extend** in the key's menu to renew it for another year.
+Когда срок действия ключа истекает, решение перестаёт работать. Выберите **Продлить** в меню ключа,
+чтобы продлить его ещё на год.
 
-## Need help?
+## Нужна помощь?
 
-Open **Support** in the menu. You can read the frequently asked questions there, or select **Ask Question**
-to send us a message with screenshots or log files attached.
+Откройте раздел **Поддержка** в меню. Там есть ответы на частые вопросы, а кнопка **Задать вопрос**
+позволяет отправить нам сообщение со скриншотами или логами.

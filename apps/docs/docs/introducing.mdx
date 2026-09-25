@@ -1,64 +1,63 @@
 ---
 id: introducing
-title: Introducing
+title: Введение
 sidebar_position: 1
 slug: /
 ---
 
 import StatusList from "@site/src/components/StatusList";
 
-# Introducing KHDev API Keys
+# Введение в KHDev API Keys
 
-KHDev API Keys is where you get and manage the license keys for the KHDev solutions you bought.
-Every purchase gives you one key. You paste the key into the solution's settings on your site,
-and it activates itself.
+KHDev API Keys — это место, где вы получаете лицензионные ключи для купленных решений KHDev и управляете ими.
+Каждая покупка даёт один ключ. Вы вставляете ключ в настройки решения на своём сайте, и оно активируется.
 
-## Solutions
+## Решения
 
-| Solution       | Platform   |
-| -------------- | ---------- |
-| Personal Price | 1С-Битрикс |
+| Решение             | Платформа  |
+| ------------------- | ---------- |
+| Персональные скидки | 1С-Битрикс |
 
-More solutions for WordPress, OpenCart and Shopify are coming.
+Скоро появятся решения для WordPress, OpenCart и Shopify.
 
-## How access works
+## Как устроен доступ
 
-KHDev API Keys is invitation-only. You cannot sign up yourself. After you buy a plugin, you receive an email
-with a link to the dashboard. You sign in with that email address and a one-time code, with no password
-to remember. See [Authentication](./authentication.md).
+KHDev API Keys работает только по приглашениям: зарегистрироваться самостоятельно нельзя. После покупки
+вы получите письмо со ссылкой на дашборд. Вход — по этому email и одноразовому коду, без пароля.
+Подробнее — в разделе [Авторизация](./authentication.md).
 
-## Your license key
+## Ваш лицензионный ключ
 
-A key looks like this:
+Ключ выглядит так:
 
 ```text
 A1B2-C3D4-E5F6-0789-0FZL-0G9Q
 ```
 
-The first four groups are random. The last two groups record the day the key was created and the day it expires.
+Первые четыре группы случайные. Последние две хранят дату создания ключа и дату окончания его действия.
 
-Each key:
+Каждый ключ:
 
-- works for **one solution** (for example Personal Price on 1С-Битрикс)
-- is valid for **one year**; after that it expires and you can extend it
-- can be activated on **3 domains**; activating it again on a domain that already uses it does not count
+- работает для **одного решения** (например, «Персональные скидки» для 1С-Битрикс)
+- действует **один год**; после этого он истекает, и его можно продлить
+- активируется на **3 доменах**; повторная активация на домене, где ключ уже используется, не считается
 
-## Key statuses
+## Статусы ключей
 
 <StatusList
   items={[
-    { label: "Active", color: "#30a46c", text: "the key works in the plugin." },
-    { label: "Inactive", color: "#8d8d8d", text: "the key is paused and does not work. You can activate it again." },
-    { label: "Expired", color: "#e5484d", text: "the term has ended. Extend the key to use it again." },
+    { label: "Активен", color: "#30a46c", text: "ключ работает в решении." },
+    { label: "Неактивен", color: "#8d8d8d", text: "ключ приостановлен и не работает. Его можно снова активировать." },
+    { label: "Истёк", color: "#e5484d", text: "срок действия закончился. Продлите ключ, чтобы снова им пользоваться." },
   ]}
 />
 
-## What you can do with a key
+## Что можно сделать с ключом
 
-| Action     | What happens                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| Regenerate | You get a new key and all 3 activations are free again. The old key stops working everywhere. |
-| Extend     | An expired key is renewed for another year and becomes active.                                  |
-| Deactivate | The key stops working until you activate it again.                                              |
+| Действие       | Что происходит                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------- |
+| Перевыпустить  | Вы получаете новый ключ, все 3 активации снова свободны. Старый ключ сразу перестаёт работать везде. |
+| Продлить       | Истёкший ключ продлевается ещё на год и снова становится активным.                                  |
+| Деактивировать | Ключ перестаёт работать, пока вы снова его не активируете.                                          |
 
-Keys cannot be deleted. New keys are created only when you buy a plugin.
+Ключи нельзя удалить. Новые ключи создаются только при покупке решения.
