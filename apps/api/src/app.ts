@@ -12,6 +12,7 @@ import { SUPPORT_MAX_FILE_BYTES, SUPPORT_MAX_FILES } from "@khdev/contracts";
 import type { AppContext } from "./context.js";
 import { AppError } from "./lib/errors.js";
 import { authPlugin } from "./plugins/auth.js";
+import { authRoutes } from "./routes/auth.js";
 import { systemRoutes } from "./routes/system.js";
 
 declare module "fastify" {
@@ -73,6 +74,7 @@ export async function buildApp(deps: AppDeps) {
   await app.register(
     async (api) => {
       await api.register(systemRoutes);
+      await api.register(authRoutes);
     },
     { prefix: "/api" },
   );
