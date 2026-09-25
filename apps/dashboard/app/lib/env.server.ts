@@ -13,6 +13,8 @@ export const env = {
   apiUrl: trimSlash(process.env.API_URL ?? "http://localhost:3001"),
   sessionSecret: process.env.SESSION_SECRET ?? "dev-session-secret-change-me",
   docsUrl: trimSlash(process.env.DOCS_URL ?? "http://localhost:3002"),
+  /** Set from the git tag at release build time (see .github/workflows/release.yml). */
+  appVersion: process.env.APP_VERSION,
   storeUrls: {
     bitrix: process.env.STORE_URL_BITRIX ?? "https://marketplace.1c-bitrix.ru/",
     wordpress: process.env.STORE_URL_WORDPRESS ?? "https://wordpress.org/plugins/",

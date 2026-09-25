@@ -382,7 +382,7 @@ Auth for every endpoint: admin session
 
 ### GET /admin/keys
 
-Query: `dateFrom`, `dateTo`, `platform`, `status`, `page`, `pageSize`
+Query: `dateFrom`, `dateTo`, `platform`, `status`, `email` (part of the customer email), `page`, `pageSize`
 
 Response `200` — list of admin key objects
 

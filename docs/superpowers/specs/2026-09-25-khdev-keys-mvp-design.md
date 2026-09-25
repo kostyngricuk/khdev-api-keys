@@ -128,10 +128,10 @@ Tables:
 
 ### 5.4 Dev Admin (local development only)
 
-- `pnpm db:seed:dev` upserts `admin@khdev.by` (`admin`, `active`). It refuses to run unless
-  `NODE_ENV=development`.
+- `pnpm db:seed:dev` upserts `admin@khdev.by` (`admin`, `active`) and `customer@khdev.by` (`customer`,
+  `active`, one active key per platform). It refuses to run unless `NODE_ENV=development`.
 - When `NODE_ENV=development` and `DEV_ADMIN_ENABLED=true`, `/api/auth/verify-code` accepts the
-  fixed code `123456` for `admin@khdev.by` only. Normal codes keep working.
+  fixed code `123456` for `admin@khdev.by` and `customer@khdev.by` only. Normal codes keep working.
 - The API refuses to start if `DEV_ADMIN_ENABLED=true` and `NODE_ENV` is not `development`.
 - An endpoint test asserts the fixed code is rejected when `NODE_ENV=production`.
 
@@ -234,8 +234,10 @@ Layout:
   (opens in a new tab) is pinned to the bottom.
 - Top bar, right corner: role badge, round avatar with the first letter of the email, full email,
   exit icon button.
-- Filters: DateFrom, DateTo, Platform, Status, plus Email on the Customers page only. Filters are
-  kept in URL search params, so loaders read them and pages can be shared.
+- Filters: DateFrom, DateTo, Platform, Status, plus Email on the admin Customers and All API Keys pages.
+  Filters are kept in URL search params, so loaders read them and pages can be shared.
+- Below 1024px (tablets, phones) the sidebar is hidden; a burger button in the top bar opens it as a
+  drawer above the page. The dashboard version is shown at the bottom of the sidebar.
 
 Colors (defined once in `app/lib/colors.ts`):
 

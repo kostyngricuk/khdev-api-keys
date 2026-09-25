@@ -23,5 +23,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 
 await app.listen({ host: config.host, port: config.port });
 if (config.devAdminEnabled) {
-  app.log.warn("Dev admin login is enabled (admin@khdev.by / 123456). Never enable this outside local development.");
+  app.log.warn(
+    "Dev login is enabled (admin@khdev.by, customer@khdev.by / 123456). Never enable this outside local development.",
+  );
 }

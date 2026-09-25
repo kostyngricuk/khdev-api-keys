@@ -75,3 +75,105 @@ body {
 .faq-item + .faq-item {
   border-top: 1px solid var(--gray-a5);
 }
+
+/* ---- Layout: desktop sidebar, tablet/mobile drawer ---------------------- */
+
+.sidebar-desktop {
+  width: 240px;
+  flex-shrink: 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--color-panel-solid);
+  border-right: 1px solid var(--gray-a5);
+}
+
+.topbar {
+  padding: 0 var(--space-5);
+}
+
+.page-content {
+  padding: var(--space-5);
+}
+
+.burger-button {
+  display: none;
+}
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--black-a8);
+}
+
+.drawer-content {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 101;
+  width: min(280px, 85vw);
+  background: var(--color-panel-solid);
+  box-shadow: var(--shadow-6);
+}
+
+.drawer-overlay[data-state="open"] {
+  animation: drawer-fade-in 150ms ease-out;
+}
+
+.drawer-content[data-state="open"] {
+  animation: drawer-slide-in 200ms ease-out;
+}
+
+@keyframes drawer-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-overlay[data-state="open"],
+  .drawer-content[data-state="open"] {
+    animation: none;
+  }
+}
+
+/* Tablets and phones: hide the sidebar, show the burger. */
+@media (max-width: 1023px) {
+  .sidebar-desktop {
+    display: none;
+  }
+
+  .burger-button {
+    display: inline-flex;
+  }
+
+  .topbar {
+    padding: 0 var(--space-3);
+  }
+
+  .page-content {
+    padding: var(--space-3);
+  }
+}
+
+/* The drawer is only for small screens; close it visually if the window grows. */
+@media (min-width: 1024px) {
+  .drawer-overlay,
+  .drawer-content {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-email {
+    max-width: 40vw;
+  }
+}

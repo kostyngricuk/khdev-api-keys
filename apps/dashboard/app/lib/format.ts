@@ -20,3 +20,5 @@ export function formatDate(iso: string | null | undefined): string {
 export const statusLabel = (status: string) => status.charAt(0).toUpperCase() + status.slice(1);
 
 export const avatarLetter = (email: string) => email.trim().charAt(0).toUpperCase() || "?";
+
+export const versionLabel = (version: string) => `v${version.replace(/^v/, "")}`;

@@ -10,6 +10,11 @@ export function dateRange(query: { dateFrom?: string; dateTo?: string }): DateRa
   };
 }
 
+/** ILIKE pattern that matches `value` literally anywhere (escapes %, _ and \\). */
+export function containsPattern(value: string): string {
+  return `%${value.toLowerCase().replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+}
+
 export function pageOffset(query: { page: number; pageSize: number }) {
   return { limit: query.pageSize, offset: (query.page - 1) * query.pageSize };
 }

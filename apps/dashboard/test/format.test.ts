@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avatarLetter, formatDate, platformLabel, statusLabel } from "~/lib/format";
+import { avatarLetter, formatDate, platformLabel, statusLabel, versionLabel } from "~/lib/format";
 
 describe("formatDate", () => {
   it("formats ISO dates as DD.MM.YYYY in UTC", () => {
@@ -30,5 +30,13 @@ describe("avatarLetter", () => {
   it("uses the uppercase first letter of the email", () => {
     expect(avatarLetter("admin@khdev.by")).toBe("A");
     expect(avatarLetter("")).toBe("?");
+  });
+});
+
+describe("versionLabel", () => {
+  it("prefixes the version with v once", () => {
+    expect(versionLabel("1.2.0")).toBe("v1.2.0");
+    expect(versionLabel("v1.2.0")).toBe("v1.2.0");
+    expect(versionLabel("0.0.0-dev")).toBe("v0.0.0-dev");
   });
 });

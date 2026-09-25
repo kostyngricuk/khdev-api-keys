@@ -57,6 +57,31 @@ describe("GET /api/admin/keys", () => {
   });
 });
 
+describe("GET /api/admin/keys email filter", () => {
+  it("filters by owner email substring, case-insensitively", async () => {
+    const { headers } = await t.createAdmin();
+    const alice = await t.createUser({ email: "alice@shop.com" });
+    const bob = await t.createUser({ email: "bob@store.com" });
+    await t.createKey({ userId: alice.id });
+    await t.createKey({ userId: alice.id, platform: "shopify" });
+    await t.createKey({ userId: bob.id });
+    const get = async (qs: string) => (await t.app.inject({ method: "GET", url: `/api/admin/keys?${qs}`, headers })).json();
+
+    const res = await get("email=%20SHOP%20");
+    expect(res.total).toBe(2);
+    expect(res.items.every((k: { email: string }) => k.email === "alice@shop.com")).toBe(true);
+    expect((await get("email=%25")).total).toBe(0);
+    expect((await get("email=bob&platform=shopify")).total).toBe(0);
+  });
+
+  it("is not available on the customer keys endpoint", async () => {
+    const { user, headers } = await t.createCustomer("me@example.com");
+    await t.createKey({ userId: user.id });
+    const res = await t.app.inject({ method: "GET", url: "/api/keys?email=nobody", headers });
+    expect(res.json().total).toBe(1);
+  });
+});
+
 describe("PATCH /api/admin/keys/:id/activation-limit", () => {
   const patch = (id: string, payload: unknown, headers: Record<string, string>) =>
     t.app.inject({ method: "PATCH", url: `/api/admin/keys/${id}/activation-limit`, payload: payload as object, headers });

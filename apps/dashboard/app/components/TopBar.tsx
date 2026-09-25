@@ -4,29 +4,33 @@ import type { AuthUser } from "@khdev/contracts";
 import { Form } from "react-router";
 import { avatarLetter, statusLabel } from "~/lib/format";
 
-export function TopBar({ user }: { user: AuthUser }) {
+export function TopBar({ user, menu }: { user: AuthUser; menu?: React.ReactNode }) {
   return (
     <Flex
       align="center"
-      justify="end"
+      justify="between"
       gap="3"
-      px="5"
+      className="topbar"
       style={{ height: 60, background: "var(--color-panel-solid)", borderBottom: "1px solid var(--gray-a5)" }}
     >
+      <Flex align="center">{menu}</Flex>
+      <Flex align="center" gap="3" style={{ minWidth: 0 }}>
       <Badge color={user.role === "admin" ? "indigo" : "cyan"} variant="soft" size="2">
         {statusLabel(user.role)}
       </Badge>
       <Avatar size="2" radius="full" fallback={avatarLetter(user.email)} color="indigo" variant="solid" />
-      <Text size="2" weight="medium">
+      <Text size="2" weight="medium" truncate className="topbar-email">
         {user.email}
       </Text>
-      <Form method="post" action="/logout">
+      {/* A plain block form would sit the icon on the text baseline; flex keeps it vertically centered. */}
+      <Form method="post" action="/logout" style={{ display: "flex", alignItems: "center" }}>
         <Tooltip content="Sign out">
           <IconButton type="submit" variant="ghost" color="gray" aria-label="Sign out">
             <ExitIcon />
           </IconButton>
         </Tooltip>
       </Form>
+      </Flex>
     </Flex>
   );
 }

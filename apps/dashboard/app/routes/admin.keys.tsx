@@ -18,7 +18,7 @@ export const meta: Route.MetaFunction = () => [{ title: "All API Keys · KHDev K
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "admin");
-  const filters = parseFilters(new URL(request.url), { statuses: KEY_STATUSES });
+  const filters = parseFilters(new URL(request.url), { statuses: KEY_STATUSES, allowEmail: true });
   const keys = await api<Paginated<AdminKey>>(request, `/admin/keys?${toApiQuery(filters)}`);
   return { keys, filters };
 }
@@ -33,7 +33,7 @@ export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <PageHeader title="All API Keys" description="Every customer key. Keys are masked: only the first and last 4 characters are shown." />
-      <Filters filters={filters} statuses={KEY_STATUSES} />
+      <Filters filters={filters} statuses={KEY_STATUSES} showEmail />
       <Card>
         {keys.items.length === 0 ? (
           <EmptyState title="No keys found" hint="Change the filters to see more keys." />

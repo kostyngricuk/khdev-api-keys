@@ -20,6 +20,20 @@ describe("dev admin login", () => {
     expect(res.json().user).toMatchObject({ email: "admin@khdev.by", role: "admin" });
   });
 
+  it("accepts 123456 for customer@khdev.by in development", async () => {
+    t = await createTestApp({ env: { NODE_ENV: "development", DEV_ADMIN_ENABLED: "true", LOG_LEVEL: "silent" } });
+    await t.createUser({ email: "customer@khdev.by", role: "customer" });
+    const res = await verify(t, "customer@khdev.by", "123456");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().user).toMatchObject({ email: "customer@khdev.by", role: "customer" });
+  });
+
+  it("rejects 123456 for customer@khdev.by in production", async () => {
+    t = await createTestApp({ env: { NODE_ENV: "production", LOG_LEVEL: "silent" } });
+    await t.createUser({ email: "customer@khdev.by" });
+    expect((await verify(t, "customer@khdev.by", "123456")).statusCode).toBe(401);
+  });
+
   it("does not accept 123456 for other users in development", async () => {
     t = await createTestApp({ env: { NODE_ENV: "development", DEV_ADMIN_ENABLED: "true", LOG_LEVEL: "silent" } });
     await t.createUser({ email: "someone@example.com" });

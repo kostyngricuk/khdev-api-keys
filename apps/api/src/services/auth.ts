@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { VerifyCodeResponse } from "@khdev/contracts";
-import { DEV_ADMIN_CODE, DEV_ADMIN_EMAIL } from "../config.js";
+import { DEV_ADMIN_CODE, DEV_LOGIN_EMAILS } from "../config.js";
 import type { AppContext } from "../context.js";
 import { apiKeys, loginCodes, users } from "../db/schema.js";
 import { generateCode, hashSecret, safeEqual } from "../lib/crypto.js";
@@ -54,8 +54,8 @@ export async function requestLoginCode(ctx: AppContext, email: string) {
   return { ok: true as const, resendAfterSeconds: RESEND_AFTER_SECONDS };
 }
 
-function isDevAdminLogin(ctx: AppContext, email: string, code: string) {
-  return ctx.config.isDev && ctx.config.devAdminEnabled && email === DEV_ADMIN_EMAIL && code === DEV_ADMIN_CODE;
+function isDevLogin(ctx: AppContext, email: string, code: string) {
+  return ctx.config.isDev && ctx.config.devAdminEnabled && DEV_LOGIN_EMAILS.includes(email) && code === DEV_ADMIN_CODE;
 }
 
 async function checkCode(ctx: AppContext, userId: string, code: string) {
@@ -86,7 +86,7 @@ async function checkCode(ctx: AppContext, userId: string, code: string) {
 
 export async function verifyLoginCode(ctx: AppContext, email: string, code: string): Promise<VerifyCodeResponse> {
   const user = await findSignInUser(ctx, email);
-  const codeId = isDevAdminLogin(ctx, email, code) ? null : await checkCode(ctx, user.id, code);
+  const codeId = isDevLogin(ctx, email, code) ? null : await checkCode(ctx, user.id, code);
   const now = ctx.now();
 
   const token = await ctx.db.transaction(async (tx) => {

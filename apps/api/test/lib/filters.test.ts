@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateRange, pageOffset } from "../../src/lib/filters.js";
+import { containsPattern, dateRange, pageOffset } from "../../src/lib/filters.js";
 
 describe("dateRange", () => {
   it("returns empty bounds when no dates are given", () => {
@@ -17,5 +17,12 @@ describe("pageOffset", () => {
   it("converts page and pageSize to limit and offset", () => {
     expect(pageOffset({ page: 1, pageSize: 20 })).toEqual({ limit: 20, offset: 0 });
     expect(pageOffset({ page: 3, pageSize: 10 })).toEqual({ limit: 10, offset: 20 });
+  });
+});
+
+describe("containsPattern", () => {
+  it("lowercases and escapes LIKE wildcards", () => {
+    expect(containsPattern("Shop")).toBe("%shop%");
+    expect(containsPattern("50%_off\\")).toBe("%50\\%\\_off\\\\%");
   });
 });

@@ -5,6 +5,7 @@ import { keyStatusSchema, platformSchema, USER_STATUSES, KEY_STATUSES, PLATFORMS
 export const adminKeyQuery = listQuerySchema.extend({
   platform: platformSchema.optional(),
   status: keyStatusSchema.optional(),
+  email: z.string().trim().max(254).optional(),
 });
 export type AdminKeyQuery = z.infer<typeof adminKeyQuery>;
 

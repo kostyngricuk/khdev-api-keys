@@ -1,10 +1,10 @@
-import { and, count, desc, eq, gte, lt, lte, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, lt, lte, ne, sql } from "drizzle-orm";
 import type { AdminKey, AuthUser, CustomerKey, KeyStatus, Platform } from "@khdev/contracts";
 import type { AppContext } from "../context.js";
 import type { Executor } from "../db/client.js";
 import { apiKeys, keyActivations, users } from "../db/schema.js";
 import { conflict, notFound } from "../lib/errors.js";
-import { dateRange, pageOffset } from "../lib/filters.js";
+import { containsPattern, dateRange, pageOffset } from "../lib/filters.js";
 import { generateKey, maskKey, rebuildKeyExpiry } from "../lib/key.js";
 
 export const DAY_MS = 86_400_000;
@@ -98,6 +98,8 @@ export type KeyFilters = {
   userId?: string;
   platform?: Platform;
   status?: KeyStatus;
+  /** Owner email substring (admin list only). */
+  email?: string;
   dateFrom?: string;
   dateTo?: string;
   page: number;
@@ -111,6 +113,7 @@ export async function listKeys(ctx: AppContext, filters: KeyFilters): Promise<{ 
     filters.userId ? eq(apiKeys.userId, filters.userId) : undefined,
     filters.platform ? eq(apiKeys.platform, filters.platform) : undefined,
     filters.status ? eq(apiKeys.status, filters.status) : undefined,
+    filters.email ? ilike(users.email, containsPattern(filters.email)) : undefined,
     from ? gte(apiKeys.createdAt, from) : undefined,
     to ? lt(apiKeys.createdAt, to) : undefined,
   );

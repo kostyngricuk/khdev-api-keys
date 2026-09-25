@@ -28,18 +28,21 @@ cp apps/api/.env.example apps/api/.env
 cp apps/dashboard/.env.example apps/dashboard/.env
 
 pnpm db:migrate
-pnpm db:seed:dev                      # creates the local admin
+pnpm db:seed:dev                      # creates the local admin and customer
 pnpm dev                              # api, dashboard and docs
 ```
 
 Open <http://localhost:3000>.
 
-### Local admin
+### Local accounts
 
-Local development only (`NODE_ENV=development` and `DEV_ADMIN_ENABLED=true` in `apps/api/.env`):
+Local development only (`NODE_ENV=development` and `DEV_ADMIN_ENABLED=true` in `apps/api/.env`).
+`pnpm db:seed:dev` creates both; the customer gets one active key per platform.
 
-- Email: `admin@khdev.by`
-- Code: `123456`
+| Role     | Email               | Code     |
+| -------- | ------------------- | -------- |
+| Admin    | `admin@khdev.by`    | `123456` |
+| Customer | `customer@khdev.by` | `123456` |
 
 The API refuses to start if `DEV_ADMIN_ENABLED=true` is set in any other environment.
 
@@ -66,7 +69,7 @@ Without Mailpit, set `MAIL_TRANSPORT=log` in `apps/api/.env` to print emails to 
 | `pnpm test`        | Vitest (API utils + every endpoint, dashboard utils) |
 | `pnpm db:generate` | Generate a migration from the Drizzle schema |
 | `pnpm db:migrate`  | Apply migrations                      |
-| `pnpm db:seed:dev` | Create the local admin                |
+| `pnpm db:seed:dev` | Create the local admin and customer   |
 
 API tests run against an in-memory PostgreSQL (PGlite), so they need no database or Docker.
 

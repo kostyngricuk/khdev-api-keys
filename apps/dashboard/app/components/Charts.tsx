@@ -94,7 +94,10 @@ export function TrendLineChart({ rows }: { rows: ChartRow[] }) {
           dot={{ r: 4, strokeWidth: 2, stroke: "var(--color-panel-solid)", fill: "var(--accent-9)" }}
           activeDot={{ r: 6, strokeWidth: 2, stroke: "var(--color-panel-solid)" }}
           isAnimationActive={false}
-        />
+        >
+          {/* Direct labels while the series is short enough to stay readable. */}
+          {rows.length <= 12 && <LabelList dataKey="value" position="top" offset={10} fill="var(--gray-12)" fontSize={12} />}
+        </Line>
       </LineChart>
     </ResponsiveContainer>
   );

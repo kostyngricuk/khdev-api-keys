@@ -3,10 +3,8 @@ import type { AdminCustomer, CustomerQuery, UserStatus } from "@khdev/contracts"
 import type { AppContext } from "../context.js";
 import { apiKeys, users } from "../db/schema.js";
 import { conflict, notFound } from "../lib/errors.js";
-import { dateRange, pageOffset } from "../lib/filters.js";
+import { containsPattern, dateRange, pageOffset } from "../lib/filters.js";
 import { deleteUserSessions } from "./sessions.js";
-
-const escapeLike = (value: string) => value.replace(/[\\%_]/g, (char) => `\\${char}`);
 
 const customerColumns = {
   id: users.id,
@@ -46,7 +44,7 @@ export async function listCustomers(ctx: AppContext, query: CustomerQuery) {
   const where = and(
     eq(users.role, "customer"),
     query.status ? eq(users.status, query.status) : undefined,
-    query.email ? ilike(users.email, `%${escapeLike(query.email.toLowerCase())}%`) : undefined,
+    query.email ? ilike(users.email, containsPattern(query.email)) : undefined,
     from ? gte(users.createdAt, from) : undefined,
     to ? lt(users.createdAt, to) : undefined,
     query.platform

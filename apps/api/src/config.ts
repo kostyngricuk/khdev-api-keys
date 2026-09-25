@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const DEV_ADMIN_EMAIL = "admin@khdev.by";
+export const DEV_CUSTOMER_EMAIL = "customer@khdev.by";
+/** Local development accounts that can sign in with DEV_ADMIN_CODE when DEV_ADMIN_ENABLED=true. */
+export const DEV_LOGIN_EMAILS: readonly string[] = [DEV_ADMIN_EMAIL, DEV_CUSTOMER_EMAIL];
 export const DEV_ADMIN_CODE = "123456";
 
 const bool = z
