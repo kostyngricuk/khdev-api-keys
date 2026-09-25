@@ -1,0 +1,80 @@
+import { z } from "zod";
+
+export const DEV_ADMIN_EMAIL = "admin@khdev.by";
+export const DEV_ADMIN_CODE = "123456";
+
+const bool = z
+  .enum(["true", "false", "1", "0"])
+  .optional()
+  .transform((value) => value === "true" || value === "1");
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  HOST: z.string().default("0.0.0.0"),
+  PORT: z.coerce.number().int().default(3001),
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: "DATABASE_URL must be a postgres:// URL" }),
+  SMTP_HOST: z.string().default("localhost"),
+  SMTP_PORT: z.coerce.number().int().default(1025),
+  SMTP_SECURE: bool,
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  MAIL_FROM: z.string().default("KHDev Keys <no-reply@khdev.by>"),
+  SUPPORT_EMAIL: z.email().default("support@khdev.by"),
+  DASHBOARD_URL: z.url().default("http://localhost:3000"),
+  DOCS_URL: z.url().default("http://localhost:3002"),
+  WELCOME_VIDEO_URL: z.url().default("https://www.youtube.com/@khdev"),
+  SERVICE_TOKEN: z.string().min(16).optional(),
+  AUTH_CODE_PEPPER: z.string().min(16).optional(),
+  KEY_TERM_DAYS: z.coerce.number().int().min(1).default(365),
+  UPLOAD_DIR: z.string().default("./uploads"),
+  DEV_ADMIN_ENABLED: bool,
+  CORS_ORIGIN: z.string().optional(),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
+  APP_VERSION: z.string().optional(),
+  GIT_SHA: z.string().optional(),
+  BUILT_AT: z.string().optional(),
+});
+
+export type Config = ReturnType<typeof loadConfig>;
+
+export function loadConfig(env: Record<string, string | undefined>) {
+  const parsed = envSchema.safeParse(env);
+  if (!parsed.success) {
+    const details = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
+    throw new Error(`Invalid configuration: ${details}`);
+  }
+  const e = parsed.data;
+  const isDev = e.NODE_ENV === "development";
+  const isProd = e.NODE_ENV === "production";
+
+  if (e.DEV_ADMIN_ENABLED && !isDev) {
+    throw new Error("DEV_ADMIN_ENABLED=true is only allowed when NODE_ENV=development");
+  }
+  if (isProd && (!e.AUTH_CODE_PEPPER || !e.SERVICE_TOKEN)) {
+    throw new Error("Invalid configuration: AUTH_CODE_PEPPER and SERVICE_TOKEN are required in production");
+  }
+
+  return {
+    env: e.NODE_ENV,
+    isDev,
+    isProd,
+    isTest: e.NODE_ENV === "test",
+    host: e.HOST,
+    port: e.PORT,
+    databaseUrl: e.DATABASE_URL,
+    logLevel: e.LOG_LEVEL ?? (e.NODE_ENV === "test" ? "silent" : "info"),
+    smtp: { host: e.SMTP_HOST, port: e.SMTP_PORT, secure: e.SMTP_SECURE, user: e.SMTP_USER, pass: e.SMTP_PASS },
+    mailFrom: e.MAIL_FROM,
+    supportEmail: e.SUPPORT_EMAIL,
+    dashboardUrl: e.DASHBOARD_URL.replace(/\/$/, ""),
+    docsUrl: e.DOCS_URL.replace(/\/$/, ""),
+    welcomeVideoUrl: e.WELCOME_VIDEO_URL,
+    serviceToken: e.SERVICE_TOKEN ?? "dev-service-token-change-me",
+    authCodePepper: e.AUTH_CODE_PEPPER ?? "dev-pepper-change-me",
+    keyTermDays: e.KEY_TERM_DAYS,
+    uploadDir: e.UPLOAD_DIR,
+    devAdminEnabled: e.DEV_ADMIN_ENABLED,
+    corsOrigin: e.CORS_ORIGIN,
+    version: { APP_VERSION: e.APP_VERSION, GIT_SHA: e.GIT_SHA, BUILT_AT: e.BUILT_AT },
+  };
+}
