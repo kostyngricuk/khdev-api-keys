@@ -13,6 +13,7 @@ import type { AppContext } from "./context.js";
 import { AppError } from "./lib/errors.js";
 import { authPlugin } from "./plugins/auth.js";
 import { authRoutes } from "./routes/auth.js";
+import { inviteRoutes } from "./routes/invites.js";
 import { systemRoutes } from "./routes/system.js";
 
 declare module "fastify" {
@@ -75,6 +76,7 @@ export async function buildApp(deps: AppDeps) {
     async (api) => {
       await api.register(systemRoutes);
       await api.register(authRoutes);
+      await api.register(inviteRoutes);
     },
     { prefix: "/api" },
   );
