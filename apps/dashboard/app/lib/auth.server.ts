@@ -24,4 +24,5 @@ export async function requireRole(request: Request, role: UserRole): Promise<Aut
   return user;
 }
 
-export const homePath = (user: AuthUser) => (user.role === "admin" ? "/admin/keys" : "/keys");
+/** Where each role lands after sign-in (and on "/"): admins start on Statistics. */
+export const homePath = (user: AuthUser) => (user.role === "admin" ? "/admin/stats" : "/keys");
