@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { useI18n } from "~/i18n/context";
 import { versionLabel } from "~/lib/format";
+import { Wordmark } from "./Wordmark";
 
 type NavItem = { to: string; labelKey: string; icon: React.ReactNode };
 
@@ -34,28 +35,11 @@ const NAV: Record<UserRole, NavItem[]> = {
 
 export type SidebarProps = { role: UserRole; docsUrl: string; version: string };
 
-/** Wordmark: "KHDev" on the accent background like a logo, followed by "API Keys". */
 function Brand() {
   const { t } = useI18n();
   return (
-    <Flex align="center" gap="2" px="3" pt="1" aria-label={t("common.appName")} role="img">
-      <Text
-        size="2"
-        weight="bold"
-        style={{
-          background: "var(--accent-9)",
-          color: "white",
-          padding: "3px 8px",
-          borderRadius: 6,
-          letterSpacing: "0.02em",
-          lineHeight: 1.3,
-        }}
-      >
-        {t("common.brandMark")}
-      </Text>
-      <Text weight="bold" size="3">
-        {t("common.brandName")}
-      </Text>
+    <Flex align="center" px="3" pt="1" aria-label={t("common.appName")} role="img">
+      <Wordmark />
     </Flex>
   );
 }

@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, EnvelopeClosedIcon, ExclamationTriangleIcon, InfoCircledIcon, LockClosedIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, EnvelopeClosedIcon, ExclamationTriangleIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import { Box, Button, Callout, Card, Flex, Heading, Link as ThemeLink, Text, TextField } from "@radix-ui/themes";
 import type { AuthUser, VerifyCodeResponse } from "@khdev/contracts";
 import { unstable_OneTimePasswordField as OneTimePasswordField } from "radix-ui";
@@ -7,6 +7,7 @@ import { data, Form, Link, redirect, useNavigation } from "react-router";
 import { api, ApiError } from "~/lib/api.server";
 import { getUser, homePath } from "~/lib/auth.server";
 import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { Wordmark } from "~/components/Wordmark";
 import { ENABLED_LOCALES } from "~/i18n";
 import { useI18n } from "~/i18n/context";
 import { serverI18n } from "~/lib/i18n.server";
@@ -234,18 +235,9 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
         </Box>
       )}
       <Box style={{ width: "100%", maxWidth: 420 }}>
-        <Flex direction="column" align="center" gap="2" mb="5">
-          <Flex
-            align="center"
-            justify="center"
-            style={{ width: 44, height: 44, borderRadius: 12, background: "var(--accent-9)", color: "white" }}
-          >
-            <LockClosedIcon width={20} height={20} />
-          </Flex>
-          <Heading size="6" align="center">
-            {t("login.title")}
-          </Heading>
-        </Flex>
+        <Heading size="6" align="center" mb="5">
+          {t("login.titlePrefix")} <Wordmark size="lg" />
+        </Heading>
         <Card size="4">{state.step === "code" ? <CodeStep state={state} busy={busy} /> : <EmailStep state={state} busy={busy} />}</Card>
       </Box>
     </Flex>

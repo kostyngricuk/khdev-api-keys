@@ -65,11 +65,11 @@ export const en = {
   },
   login: {
     metaTitle: "Sign in",
-    title: "Sign in to KHDev API Keys",
+    titlePrefix: "Sign in to",
     email: "Email",
     emailPlaceholder: "you@company.com",
     continue: "Continue",
-    inviteOnly: "Access is by invitation only. Use the email address from your invitation letter.",
+    inviteOnly: "Use the email address from your invitation letter.",
     codeSentBefore: "We sent a 6-digit code to",
     codeSentAfter: "It expires in 10 minutes.",
     enterCode: "Enter the 6-digit code",

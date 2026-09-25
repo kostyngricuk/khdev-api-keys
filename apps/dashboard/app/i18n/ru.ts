@@ -66,11 +66,11 @@ export const ru: Dictionary = {
   },
   login: {
     metaTitle: "Вход",
-    title: "Вход в KHDev API Keys",
+    titlePrefix: "Вход в",
     email: "Email",
     emailPlaceholder: "you@company.com",
     continue: "Продолжить",
-    inviteOnly: "Доступ только по приглашению. Укажите email из письма-приглашения.",
+    inviteOnly: "Укажите email из письма-приглашения.",
     codeSentBefore: "Мы отправили 6-значный код на",
     codeSentAfter: "Код действует 10 минут.",
     enterCode: "Введите 6-значный код",
