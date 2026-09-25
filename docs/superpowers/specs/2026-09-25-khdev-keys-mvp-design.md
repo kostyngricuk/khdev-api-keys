@@ -88,6 +88,30 @@ Tables:
   re-invited as a new row (new id, status `inactive`) while the old row stays for history.
 - Activation count for a key = number of `key_activations` rows.
 
+### Solutions (added after the initial spec)
+
+- `solutions` table: `id`, `slug` unique, `name`, `platform`, `store_url` null. Seeded by the initial migration
+  with **Personal Price** (`personal-price`, `bitrix`). More solutions are added as rows.
+- Every key has `solution_id`; the key's `platform` is copied from its solution at creation.
+- Invites take `solutions: slug[]` (one key per entry); unknown slugs return `400 UNKNOWN_SOLUTION`.
+- Validate/apply accept an optional `solution`; a key for another solution returns `409 SOLUTION_MISMATCH`.
+- `GET /api/solutions` (session) lists solutions. Key tables show a Solution column (name + platform logo)
+  instead of Platform; key filters add Solution; the "Get a new key" dialog lists solutions with store links;
+  stats add keys by solution.
+- Keys are shown masked to customers too; the copy button copies the full key. Status changes are made from
+  the row menu (⋯) on key and customer tables.
+
+### Languages and branding (added after the initial spec)
+
+- The product is called **KHDev API Keys**.
+- The dashboard and docs are Russian-only for now; every UI string still goes through the translation
+  dictionaries. Enabling English (dashboard `ENABLED_LOCALES`, docs `i18n.locales`) brings back the language
+  switch (dashboard top bar and login; docs sidebar bottom); the choice is kept in the `lang` cookie. Dictionaries live in
+  `apps/dashboard/app/i18n/{ru,en}.ts` and must have identical keys (enforced by a test).
+- Solution names are translated in the dashboard by slug (Personal Price → «Персональные скидки»); solutions
+  without a translation show the database name. The Customers table shows a Solutions column and filter.
+- Platforms are shown with one universal bold icon in the platform's brand color; the tooltip names the platform.
+
 ## 5. Business Rules
 
 ### 5.1 Users
@@ -126,14 +150,14 @@ Tables:
   `inactive` keys to `active` (first-login activation); set `last_login_at`; create a session.
 - Keys added by an invite to a user who is already `active` are created `active`.
 
-### 5.4 Dev Admin (local development only)
+### 5.4 Dev Logins (every environment except production)
 
-- `pnpm db:seed:dev` upserts `admin@khdev.by` (`admin`, `active`). It refuses to run unless
-  `NODE_ENV=development`.
-- When `NODE_ENV=development` and `DEV_ADMIN_ENABLED=true`, `/api/auth/verify-code` accepts the
-  fixed code `123456` for `admin@khdev.by` only. Normal codes keep working.
-- The API refuses to start if `DEV_ADMIN_ENABLED=true` and `NODE_ENV` is not `development`.
-- An endpoint test asserts the fixed code is rejected when `NODE_ENV=production`.
+- `pnpm db:seed:dev` upserts `admin@khdev.by` (`admin`, `active`) and `customer@khdev.by` (`customer`,
+  `active`, one active key per solution plus one expired key). It refuses to run when `NODE_ENV=production`.
+- When `NODE_ENV` is not `production`, `/api/auth/verify-code` accepts the fixed code `123456` for these two
+  emails only. Normal codes keep working. A missing `NODE_ENV` counts as production, so deployed servers
+  must never run with `development` or `test`.
+- Endpoint tests assert the fixed code is accepted in development/test and rejected in production.
 
 ### 5.5 API Keys
 
@@ -234,8 +258,10 @@ Layout:
   (opens in a new tab) is pinned to the bottom.
 - Top bar, right corner: role badge, round avatar with the first letter of the email, full email,
   exit icon button.
-- Filters: DateFrom, DateTo, Platform, Status, plus Email on the Customers page only. Filters are
-  kept in URL search params, so loaders read them and pages can be shared.
+- Filters: DateFrom, DateTo, Platform, Status, plus Email on the admin Customers and All API Keys pages.
+  Filters are kept in URL search params, so loaders read them and pages can be shared.
+- Below 1024px (tablets, phones) the sidebar is hidden; a burger button in the top bar opens it as a
+  drawer above the page. The dashboard version is shown at the bottom of the sidebar.
 
 Colors (defined once in `app/lib/colors.ts`):
 
@@ -267,7 +293,8 @@ Docusaurus 3, docs-only mode (`routeBasePath: '/'`, no blog, no landing page). S
 
 `NODE_ENV`, `PORT`, `DATABASE_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`,
 `MAIL_FROM`, `SUPPORT_EMAIL`, `DASHBOARD_URL`, `DOCS_URL`, `WELCOME_VIDEO_URL`, `SERVICE_TOKEN`,
-`AUTH_CODE_PEPPER`, `KEY_TERM_DAYS`, `UPLOAD_DIR`, `DEV_ADMIN_ENABLED`, `APP_VERSION`, `GIT_SHA`.
+`AUTH_CODE_PEPPER`, `KEY_TERM_DAYS`, `UPLOAD_DIR`, `TRUST_PROXY`, `MAIL_TRANSPORT`, `DATABASE_POOL_MAX`,
+`APP_VERSION`, `GIT_SHA`.
 Validated at startup with Zod; startup fails on invalid config.
 
 Dashboard env: `API_URL`, `SESSION_SECRET`, `DOCS_URL`, `STORE_URL_BITRIX`, `STORE_URL_WORDPRESS`,

@@ -1,0 +1,31 @@
+{
+  "name": "@khdev/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@khdev/eslint-config": "workspace:*",
+    "@khdev/typescript-config": "workspace:*",
+    "@types/node": "^24.13.6",
+    "eslint": "^10.11.0",
+    "typescript": "~6.0.3"
+  }
+}

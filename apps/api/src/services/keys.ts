@@ -1,0 +1,216 @@
+import { and, count, desc, eq, gte, ilike, lt, lte, ne, sql } from "drizzle-orm";
+import type { AdminKey, AuthUser, CustomerKey, KeyStatus, Platform } from "@khdev/contracts";
+import type { AppContext } from "../context.js";
+import type { Executor } from "../db/client.js";
+import { apiKeys, keyActivations, solutions, users } from "../db/schema.js";
+import { conflict, notFound } from "../lib/errors.js";
+import { containsPattern, dateRange, pageOffset } from "../lib/filters.js";
+import { generateKey, maskKey, rebuildKeyExpiry } from "../lib/key.js";
+
+export const DAY_MS = 86_400_000;
+
+export function termEnd(ctx: AppContext, from: Date): Date {
+  return new Date(from.getTime() + ctx.config.keyTermDays * DAY_MS);
+}
+
+type SolutionRef = { id: string; slug: string; platform: Platform };
+
+/** Keys are only ever created for a purchase (invite): one key per purchased solution. */
+export async function createKeysForUser(
+  ctx: AppContext,
+  db: Executor,
+  input: { userId: string; solutions: SolutionRef[]; status: KeyStatus },
+) {
+  const createdAt = ctx.now();
+  const expiresAt = termEnd(ctx, createdAt);
+  const rows = await db
+    .insert(apiKeys)
+    .values(
+      input.solutions.map((solution) => ({
+        userId: input.userId,
+        solutionId: solution.id,
+        platform: solution.platform,
+        status: input.status,
+        key: generateKey(createdAt, expiresAt),
+        createdAt,
+        expiresAt,
+      })),
+    )
+    .returning({ id: apiKeys.id, platform: apiKeys.platform, solutionId: apiKeys.solutionId });
+  const slugs = new Map(input.solutions.map((s) => [s.id, s.slug]));
+  return rows.map((row) => ({ id: row.id, platform: row.platform, solution: slugs.get(row.solutionId)! }));
+}
+
+// ---- Reading keys -------------------------------------------------------
+
+const activationsUsed = sql<number>`(select count(*)::int from "key_activations" ka where ka."key_id" = "api_keys"."id")`;
+
+const keyColumns = {
+  id: apiKeys.id,
+  userId: apiKeys.userId,
+  email: users.email,
+  platform: apiKeys.platform,
+  solutionSlug: solutions.slug,
+  solutionName: solutions.name,
+  key: apiKeys.key,
+  status: apiKeys.status,
+  activationLimit: apiKeys.activationLimit,
+  activationsUsed,
+  createdAt: apiKeys.createdAt,
+  expiresAt: apiKeys.expiresAt,
+  regeneratedAt: apiKeys.regeneratedAt,
+};
+
+export type KeyRow = {
+  id: string;
+  userId: string;
+  email: string;
+  platform: Platform;
+  solutionSlug: string;
+  solutionName: string;
+  key: string;
+  status: KeyStatus;
+  activationLimit: number;
+  activationsUsed: number;
+  createdAt: Date;
+  expiresAt: Date;
+  regeneratedAt: Date | null;
+};
+
+export function toCustomerKey(row: KeyRow, options: { mask?: boolean } = {}): CustomerKey {
+  return {
+    id: row.id,
+    platform: row.platform,
+    solution: { slug: row.solutionSlug, name: row.solutionName },
+    key: options.mask ? maskKey(row.key) : row.key,
+    status: row.status,
+    activationsUsed: row.activationsUsed,
+    activationLimit: row.activationLimit,
+    createdAt: row.createdAt.toISOString(),
+    expiresAt: row.expiresAt.toISOString(),
+    regeneratedAt: row.regeneratedAt?.toISOString() ?? null,
+  };
+}
+
+export function toAdminKey(row: KeyRow): AdminKey {
+  return { ...toCustomerKey(row, { mask: true }), userId: row.userId, email: row.email };
+}
+
+/** Expiry is materialized lazily: any read or plugin call first flips overdue keys to `expired`. */
+export async function refreshExpired(ctx: AppContext, db: Executor = ctx.db) {
+  await db
+    .update(apiKeys)
+    .set({ status: "expired" })
+    .where(and(lte(apiKeys.expiresAt, ctx.now()), ne(apiKeys.status, "expired")));
+}
+
+export type KeyFilters = {
+  userId?: string;
+  platform?: Platform;
+  solution?: string;
+  status?: KeyStatus;
+  /** Owner email substring (admin list only). */
+  email?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page: number;
+  pageSize: number;
+};
+
+export async function listKeys(ctx: AppContext, filters: KeyFilters): Promise<{ rows: KeyRow[]; total: number }> {
+  await refreshExpired(ctx);
+  const { from, to } = dateRange(filters);
+  const where = and(
+    filters.userId ? eq(apiKeys.userId, filters.userId) : undefined,
+    filters.platform ? eq(apiKeys.platform, filters.platform) : undefined,
+    filters.solution ? eq(solutions.slug, filters.solution) : undefined,
+    filters.status ? eq(apiKeys.status, filters.status) : undefined,
+    filters.email ? ilike(users.email, containsPattern(filters.email)) : undefined,
+    from ? gte(apiKeys.createdAt, from) : undefined,
+    to ? lt(apiKeys.createdAt, to) : undefined,
+  );
+  const { limit, offset } = pageOffset(filters);
+
+  const [rows, [totalRow]] = await Promise.all([
+    ctx.db
+      .select(keyColumns)
+      .from(apiKeys)
+      .innerJoin(users, eq(users.id, apiKeys.userId))
+      .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
+      .where(where)
+      .orderBy(desc(apiKeys.createdAt), desc(apiKeys.id))
+      .limit(limit)
+      .offset(offset),
+    ctx.db
+      .select({ total: count() })
+      .from(apiKeys)
+      .innerJoin(users, eq(users.id, apiKeys.userId))
+      .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
+      .where(where),
+  ]);
+  return { rows, total: totalRow?.total ?? 0 };
+}
+
+export async function getKeyRow(db: Executor, id: string): Promise<KeyRow | null> {
+  const [row] = await db
+    .select(keyColumns)
+    .from(apiKeys)
+    .innerJoin(users, eq(users.id, apiKeys.userId))
+    .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
+    .where(eq(apiKeys.id, id))
+    .limit(1);
+  return row ?? null;
+}
+
+/** Customers can reach only their own keys; everything else looks like it does not exist. */
+export async function findAccessibleKey(ctx: AppContext, user: AuthUser, id: string): Promise<KeyRow> {
+  await refreshExpired(ctx);
+  const row = await getKeyRow(ctx.db, id);
+  if (!row || (user.role !== "admin" && row.userId !== user.id)) {
+    throw notFound("KEY_NOT_FOUND", "Key not found");
+  }
+  return row;
+}
+
+// ---- Changing keys ------------------------------------------------------
+
+export async function regenerateKey(ctx: AppContext, user: AuthUser, id: string): Promise<KeyRow> {
+  const row = await findAccessibleKey(ctx, user, id);
+  if (row.status === "expired") throw conflict("KEY_EXPIRED", "Extend the expired key before regenerating it");
+  const now = ctx.now();
+
+  await ctx.db.transaction(async (tx) => {
+    // New random segments and creation day; the expiry day (Y) stays because the term does not change.
+    await tx
+      .update(apiKeys)
+      .set({ key: generateKey(now, row.expiresAt), regeneratedAt: now })
+      .where(eq(apiKeys.id, id));
+    await tx.delete(keyActivations).where(eq(keyActivations.keyId, id));
+  });
+  return (await getKeyRow(ctx.db, id))!;
+}
+
+export async function extendKey(ctx: AppContext, user: AuthUser, id: string): Promise<KeyRow> {
+  const row = await findAccessibleKey(ctx, user, id);
+  if (row.status !== "expired") throw conflict("KEY_NOT_EXPIRED", "Only expired keys can be extended");
+  const base = Math.max(ctx.now().getTime(), row.expiresAt.getTime());
+  const expiresAt = termEnd(ctx, new Date(base));
+
+  await ctx.db
+    .update(apiKeys)
+    .set({ expiresAt, key: rebuildKeyExpiry(row.key, expiresAt), status: "active" })
+    .where(eq(apiKeys.id, id));
+  return (await getKeyRow(ctx.db, id))!;
+}
+
+export async function setKeyStatus(
+  ctx: AppContext,
+  user: AuthUser,
+  id: string,
+  status: "active" | "inactive",
+): Promise<KeyRow> {
+  const row = await findAccessibleKey(ctx, user, id);
+  if (row.status === "expired") throw conflict("KEY_EXPIRED", "Extend the expired key before changing its status");
+  await ctx.db.update(apiKeys).set({ status }).where(eq(apiKeys.id, id));
+  return (await getKeyRow(ctx.db, id))!;
+}

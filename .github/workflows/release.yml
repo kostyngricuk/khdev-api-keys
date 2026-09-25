@@ -1,0 +1,58 @@
+name: Release
+
+# Versions are managed with git tags: pushing `v1.2.3` builds every app with APP_VERSION=1.2.3,
+# which the API reports from GET /api/versions.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      APP_VERSION: ${{ github.ref_name }}
+      GIT_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - name: Build with the release version
+        run: |
+          echo "BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          pnpm build
+
+      - name: Record the version in the API build
+        run: |
+          printf '{"version":"%s","commit":"%s","builtAt":"%s"}\n' "$APP_VERSION" "$GIT_SHA" "$BUILT_AT" > apps/api/dist/build-info.json
+
+      - name: Package build output
+        run: |
+          mkdir -p release
+          tar -czf release/api.tar.gz -C apps/api dist drizzle package.json
+          tar -czf release/dashboard.tar.gz -C apps/dashboard build package.json
+          tar -czf release/docs.tar.gz -C apps/docs build
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/*.tar.gz --generate-notes --verify-tag
