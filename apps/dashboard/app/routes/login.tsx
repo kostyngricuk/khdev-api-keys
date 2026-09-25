@@ -58,7 +58,8 @@ export async function action({ request }: Route.ActionArgs) {
           sentAt: Date.now(),
         } satisfies LoginState;
       }
-      return data({ step: "email", email, error: errorText(error.code, error.message) } satisfies LoginState, {
+      const message = error.code === "VALIDATION_ERROR" ? t("validation.email") : errorText(error.code, error.message);
+      return data({ step: "email", email, error: message } satisfies LoginState, {
         status: error.status,
       });
     }

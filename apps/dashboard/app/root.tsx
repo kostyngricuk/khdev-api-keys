@@ -5,6 +5,7 @@ import { Box, Button, Card, Code, Flex, Heading, Text, Theme } from "@radix-ui/t
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteLoaderData } from "react-router";
 import { DEFAULT_LOCALE, localeFromCookie } from "~/i18n";
 import { I18nProvider, useI18n } from "~/i18n/context";
+import { ValidationMessages } from "~/components/ValidationMessages";
 import { appTitle } from "~/lib/meta";
 import type { Route } from "./+types/root";
 
@@ -29,6 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <I18nProvider locale={locale}>
+          <ValidationMessages />
           <Theme accentColor="indigo" grayColor="slate" radius="medium" scaling="100%">
             {children}
           </Theme>
