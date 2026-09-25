@@ -39,6 +39,7 @@ export const statsQuery = z.object({
   dateFrom: dateOnly.optional(),
   dateTo: dateOnly.optional(),
   platform: platformSchema.optional(),
+  solution: solutionSlugSchema.optional(),
 });
 export type StatsQuery = z.infer<typeof statsQuery>;
 
@@ -49,6 +50,8 @@ export const statsResponse = z.object({
   customersByStatus: countsOf(USER_STATUSES),
   keysByStatus: countsOf(KEY_STATUSES),
   keysByPlatform: countsOf(PLATFORMS),
+  /** Customers (created in the period) owning at least one key for the platform. */
+  customersByPlatform: countsOf(PLATFORMS),
   totalCustomers: z.number().int(),
   totalKeys: z.number().int(),
   totalActivations: z.number().int(),

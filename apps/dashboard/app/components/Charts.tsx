@@ -64,7 +64,8 @@ export function StatusBarChart({ rows }: { rows: ChartRow[] }) {
       <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 40, bottom: 0, left: 8 }} barCategoryGap="30%">
         <CartesianGrid horizontal={false} stroke="var(--gray-a4)" />
         <XAxis type="number" allowDecimals={false} {...AXIS} tick={TICK} />
-        <YAxis type="category" dataKey="label" width={80} {...AXIS} axisLine={false} tick={TICK} />
+        {/* Wide enough for the longest status label in Russian ("Заблокирован"). */}
+        <YAxis type="category" dataKey="label" width={104} {...AXIS} axisLine={false} tick={TICK} />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--gray-a3)" }} />
         <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28} isAnimationActive={false}>
           {rows.map((row) => (
@@ -81,9 +82,9 @@ export function StatusBarChart({ rows }: { rows: ChartRow[] }) {
 export function TrendLineChart({ rows }: { rows: ChartRow[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={rows} margin={{ top: 16, right: 16, bottom: 0, left: -16 }}>
+      <LineChart data={rows} margin={{ top: 16, right: 40, bottom: 0, left: -16 }}>
         <CartesianGrid vertical={false} stroke="var(--gray-a4)" />
-        <XAxis dataKey="label" {...AXIS} tick={TICK} />
+        <XAxis dataKey="label" {...AXIS} tick={TICK} padding={{ left: 24, right: 24 }} />
         <YAxis allowDecimals={false} {...AXIS} axisLine={false} tick={TICK} />
         <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--gray-a8)", strokeWidth: 1 }} />
         <Line

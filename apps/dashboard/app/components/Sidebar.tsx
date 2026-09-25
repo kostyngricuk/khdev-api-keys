@@ -32,19 +32,26 @@ const NAV: Record<UserRole, NavItem[]> = {
 
 export type SidebarProps = { role: UserRole; docsUrl: string; version: string };
 
+/** Wordmark: "KHDev" on the accent background like a logo, followed by "API Keys". */
 function Brand() {
-  const { t } = useI18n();
   return (
-    <Flex align="center" gap="2" px="3" pt="1">
-      <Flex
-        align="center"
-        justify="center"
-        style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent-9)", color: "white" }}
+    <Flex align="center" gap="2" px="3" pt="1" aria-label="KHDev API Keys" role="img">
+      <Text
+        size="2"
+        weight="bold"
+        style={{
+          background: "var(--accent-9)",
+          color: "white",
+          padding: "3px 8px",
+          borderRadius: 6,
+          letterSpacing: "0.02em",
+          lineHeight: 1.3,
+        }}
       >
-        <LockClosedIcon />
-      </Flex>
+        KHDev
+      </Text>
       <Text weight="bold" size="3">
-        {t("common.appName")}
+        API Keys
       </Text>
     </Flex>
   );

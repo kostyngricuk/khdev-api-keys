@@ -36,6 +36,7 @@ describe("GET /api/admin/stats", () => {
       customersByStatus: { inactive: 0, active: 1, blocked: 1, removed: 0 },
       keysByStatus: { inactive: 1, active: 2, expired: 0 },
       keysByPlatform: { bitrix: 0, wordpress: 2, opencart: 0, shopify: 1 },
+      customersByPlatform: { bitrix: 0, wordpress: 1, opencart: 0, shopify: 1 },
       totalCustomers: 2,
       totalKeys: 3,
       totalActivations: 2,
@@ -61,5 +62,27 @@ describe("GET /api/admin/stats", () => {
     expect(body.keysPerMonth).toEqual([{ month: "2026-09", count: 1 }]);
     // Customers created in the range who own a key for the platform: only the blocked one is in range, and has no keys.
     expect(body.totalCustomers).toBe(0);
+    expect(body.customersByPlatform).toEqual({ bitrix: 0, wordpress: 0, opencart: 0, shopify: 0 });
+  });
+
+  it("filters by solution", async () => {
+    const { headers } = await t.createAdmin();
+    await seed();
+    const res = await t.app.inject({ method: "GET", url: "/api/admin/stats?solution=test-shopify", headers });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.totalKeys).toBe(1);
+    expect(body.keysByPlatform).toEqual({ bitrix: 0, wordpress: 0, opencart: 0, shopify: 1 });
+    expect(body.keysBySolution.map((s: { slug: string }) => s.slug)).toEqual(["test-shopify"]);
+    expect(body.totalCustomers).toBe(1);
+    expect(body.customersByPlatform).toEqual({ bitrix: 0, wordpress: 0, opencart: 0, shopify: 1 });
+    // The two activations belong to a WordPress key.
+    expect(body.totalActivations).toBe(0);
+  });
+
+  it("rejects a malformed solution slug", async () => {
+    const { headers } = await t.createAdmin();
+    const res = await t.app.inject({ method: "GET", url: "/api/admin/stats?solution=Bad%20Slug!", headers });
+    expect(res.statusCode).toBe(400);
   });
 });

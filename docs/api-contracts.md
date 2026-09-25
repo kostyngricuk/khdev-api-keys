@@ -490,7 +490,7 @@ Errors
 
 ### GET /admin/stats
 
-Query: `dateFrom`, `dateTo`, `platform`
+Query: `dateFrom`, `dateTo`, `platform`, `solution`
 
 Response `200`
 
@@ -499,6 +499,7 @@ Response `200`
   "customersByStatus": { "inactive": 1, "active": 12, "blocked": 1, "removed": 0 },
   "keysByStatus": { "inactive": 2, "active": 20, "expired": 3 },
   "keysByPlatform": { "bitrix": 5, "wordpress": 10, "opencart": 4, "shopify": 6 },
+  "customersByPlatform": { "bitrix": 4, "wordpress": 8, "opencart": 3, "shopify": 5 },
   "totalCustomers": 14,
   "totalKeys": 25,
   "totalActivations": 41,
