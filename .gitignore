@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.turbo
+.react-router
+.docusaurus
+.cache-loader
+coverage
+uploads
+*.log
+.env
+.env.local
+.DS_Store
+.superpowers
