@@ -14,4 +14,6 @@ minimumReleaseAgeExclude:
   - vitest@5.0.2
 
 allowBuilds:
+  '@swc/core': true
+  core-js: false
   esbuild: true

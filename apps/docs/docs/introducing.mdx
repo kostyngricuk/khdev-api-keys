@@ -1,0 +1,63 @@
+---
+id: introducing
+title: Introducing
+sidebar_position: 1
+slug: /
+---
+
+import StatusList from "@site/src/components/StatusList";
+
+# Introducing KHDev Keys
+
+KHDev Keys is where you get and manage the license keys for the KHDev plugins you bought.
+Every plugin purchase gives you one key. You paste the key into the plugin settings on your site,
+and the plugin activates itself.
+
+## Supported platforms
+
+- 1С-Битрикс
+- WordPress
+- OpenCart
+- Shopify
+
+## How access works
+
+KHDev Keys is invitation-only. You cannot sign up yourself. After you buy a plugin, you receive an email
+with a link to the dashboard. You sign in with that email address and a one-time code, with no password
+to remember. See [Authentication](./authentication.md).
+
+## Your license key
+
+A key looks like this:
+
+```text
+A1B2-C3D4-E5F6-0789-0FZL-0G9Q
+```
+
+The first four groups are random. The last two groups record the day the key was created and the day it expires.
+
+Each key:
+
+- works for **one plugin on one platform**
+- is valid for **one year**; after that it expires and you can extend it
+- can be activated on **3 domains**; activating it again on a domain that already uses it does not count
+
+## Key statuses
+
+<StatusList
+  items={[
+    { label: "Active", color: "#30a46c", text: "the key works in the plugin." },
+    { label: "Inactive", color: "#8d8d8d", text: "the key is paused and does not work. You can activate it again." },
+    { label: "Expired", color: "#e5484d", text: "the term has ended. Extend the key to use it again." },
+  ]}
+/>
+
+## What you can do with a key
+
+| Action     | What happens                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| Regenerate | You get a new key and all 3 activations are free again. The old key stops working everywhere. |
+| Extend     | An expired key is renewed for another year and becomes active.                                  |
+| Deactivate | The key stops working until you activate it again.                                              |
+
+Keys cannot be deleted. New keys are created only when you buy a plugin.
