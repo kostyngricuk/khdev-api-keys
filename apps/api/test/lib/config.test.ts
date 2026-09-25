@@ -14,16 +14,34 @@ describe("loadConfig", () => {
     expect(config.keyTermDays).toBe(365);
     expect(config.port).toBe(3001);
     expect(config.isDev).toBe(true);
-    expect(config.devAdminEnabled).toBe(false);
     expect(config.databasePoolMax).toBe(10);
   });
 
-  it("enables the dev admin in development", () => {
-    expect(loadConfig({ ...base, DEV_ADMIN_ENABLED: "true" }).devAdminEnabled).toBe(true);
+  it.each([
+    ["development", true],
+    ["test", true],
+    ["production", false],
+  ] as const)("enables the dev logins when NODE_ENV=%s: %s", (env, enabled) => {
+    const secrets = { AUTH_CODE_PEPPER: "prod-pepper-1234567890", SERVICE_TOKEN: "prod-service-token-123" };
+    expect(loadConfig({ ...base, ...secrets, NODE_ENV: env }).devLoginEnabled).toBe(enabled);
   });
 
-  it.each(["production", "test"])("refuses DEV_ADMIN_ENABLED=true when NODE_ENV=%s", (env) => {
-    expect(() => loadConfig({ ...base, NODE_ENV: env, DEV_ADMIN_ENABLED: "true" })).toThrow(/DEV_ADMIN_ENABLED/);
+  it("keeps the dev logins off when NODE_ENV is missing (treated as production)", () => {
+    const config = loadConfig({
+      DATABASE_URL: base.DATABASE_URL,
+      AUTH_CODE_PEPPER: "prod-pepper-1234567890",
+      SERVICE_TOKEN: "prod-service-token-123",
+    });
+    expect(config.devLoginEnabled).toBe(false);
+  });
+
+  it("ignores the removed DEV_ADMIN_ENABLED variable", () => {
+    const config = loadConfig({
+      ...base,
+      NODE_ENV: "production",
+      DEV_ADMIN_ENABLED: "true",
+    });
+    expect(config.devLoginEnabled).toBe(false);
   });
 
   it("rejects an invalid DATABASE_URL", () => {

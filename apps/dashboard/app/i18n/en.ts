@@ -34,6 +34,10 @@ export const en = {
     removed: "Removed",
     expired: "Expired",
   },
+  /** Solution names by slug; solutions without an entry use the name from the database. */
+  solutionNames: {
+    "personal-price": "Personal Price",
+  },
   platform: {
     bitrix: "1C-Bitrix",
     wordpress: "WordPress",
@@ -120,7 +124,7 @@ export const en = {
     colEmail: "Email",
     colStatus: "Status",
     colKeys: "Keys",
-    colPlatforms: "Platforms",
+    colSolutions: "Solutions",
     colInvited: "Invited",
     colLastSignIn: "Last sign-in",
     actionsFor: "Actions for {email}",

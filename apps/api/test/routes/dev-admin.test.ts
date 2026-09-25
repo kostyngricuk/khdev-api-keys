@@ -12,8 +12,8 @@ const verify = (app: TestApp, email: string, code: string) =>
   app.app.inject({ method: "POST", url: "/api/auth/verify-code", payload: { email, code } });
 
 describe("dev admin login", () => {
-  it("accepts 123456 for admin@khdev.by in development with DEV_ADMIN_ENABLED=true", async () => {
-    t = await createTestApp({ env: { NODE_ENV: "development", DEV_ADMIN_ENABLED: "true", LOG_LEVEL: "silent" } });
+  it("accepts 123456 for admin@khdev.by in development", async () => {
+    t = await createTestApp({ env: { NODE_ENV: "development", LOG_LEVEL: "silent" } });
     await t.createUser({ email: "admin@khdev.by", role: "admin" });
     const res = await verify(t, "admin@khdev.by", "123456");
     expect(res.statusCode).toBe(200);
@@ -21,7 +21,7 @@ describe("dev admin login", () => {
   });
 
   it("accepts 123456 for customer@khdev.by in development", async () => {
-    t = await createTestApp({ env: { NODE_ENV: "development", DEV_ADMIN_ENABLED: "true", LOG_LEVEL: "silent" } });
+    t = await createTestApp({ env: { NODE_ENV: "development", LOG_LEVEL: "silent" } });
     await t.createUser({ email: "customer@khdev.by", role: "customer" });
     const res = await verify(t, "customer@khdev.by", "123456");
     expect(res.statusCode).toBe(200);
@@ -35,9 +35,15 @@ describe("dev admin login", () => {
   });
 
   it("does not accept 123456 for other users in development", async () => {
-    t = await createTestApp({ env: { NODE_ENV: "development", DEV_ADMIN_ENABLED: "true", LOG_LEVEL: "silent" } });
+    t = await createTestApp({ env: { NODE_ENV: "development", LOG_LEVEL: "silent" } });
     await t.createUser({ email: "someone@example.com" });
     expect((await verify(t, "someone@example.com", "123456")).statusCode).toBe(401);
+  });
+
+  it("accepts 123456 in the test environment", async () => {
+    t = await createTestApp();
+    await t.createUser({ email: "admin@khdev.by", role: "admin" });
+    expect((await verify(t, "admin@khdev.by", "123456")).statusCode).toBe(200);
   });
 
   it("rejects 123456 in production", async () => {

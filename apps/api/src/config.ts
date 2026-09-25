@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const DEV_ADMIN_EMAIL = "admin@khdev.by";
 export const DEV_CUSTOMER_EMAIL = "customer@khdev.by";
-/** Local development accounts that can sign in with DEV_ADMIN_CODE when DEV_ADMIN_ENABLED=true. */
+/** Local accounts that can sign in with DEV_ADMIN_CODE in every environment except production. */
 export const DEV_LOGIN_EMAILS: readonly string[] = [DEV_ADMIN_EMAIL, DEV_CUSTOMER_EMAIL];
 export const DEV_ADMIN_CODE = "123456";
 
@@ -32,7 +32,6 @@ const envSchema = z.object({
   AUTH_CODE_PEPPER: z.string().min(16).optional(),
   KEY_TERM_DAYS: z.coerce.number().int().min(1).default(365),
   UPLOAD_DIR: z.string().default("./uploads"),
-  DEV_ADMIN_ENABLED: bool,
   CORS_ORIGIN: z.string().optional(),
   // Number of reverse proxies in front of the API (0 = trust none; X-Forwarded-For is ignored).
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
@@ -56,9 +55,6 @@ export function loadConfig(env: Record<string, string | undefined>) {
   const isDev = e.NODE_ENV === "development";
   const isProd = e.NODE_ENV === "production";
 
-  if (e.DEV_ADMIN_ENABLED && !isDev) {
-    throw new Error("DEV_ADMIN_ENABLED=true is only allowed when NODE_ENV=development");
-  }
   if (isProd && (!e.AUTH_CODE_PEPPER || !e.SERVICE_TOKEN)) {
     throw new Error("Invalid configuration: AUTH_CODE_PEPPER and SERVICE_TOKEN are required in production");
   }
@@ -86,7 +82,8 @@ export function loadConfig(env: Record<string, string | undefined>) {
     authCodePepper: e.AUTH_CODE_PEPPER ?? "dev-pepper-change-me",
     keyTermDays: e.KEY_TERM_DAYS,
     uploadDir: e.UPLOAD_DIR,
-    devAdminEnabled: e.DEV_ADMIN_ENABLED,
+    // A missing NODE_ENV is production, so the fixed dev code is only ever accepted when explicitly not production.
+    devLoginEnabled: !isProd,
     corsOrigin: e.CORS_ORIGIN,
     trustProxy: e.TRUST_PROXY,
     version: { APP_VERSION: e.APP_VERSION, GIT_SHA: e.GIT_SHA, BUILT_AT: e.BUILT_AT },

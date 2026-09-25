@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, exists, gte, ilike, lt, sql } from "drizzle-orm";
 import type { AdminCustomer, CustomerQuery, UserStatus } from "@khdev/contracts";
 import type { AppContext } from "../context.js";
-import { apiKeys, users } from "../db/schema.js";
+import { apiKeys, solutions, users } from "../db/schema.js";
 import { conflict, notFound } from "../lib/errors.js";
 import { containsPattern, dateRange, pageOffset } from "../lib/filters.js";
 import { deleteUserSessions } from "./sessions.js";
@@ -15,6 +15,10 @@ const customerColumns = {
   // Drizzle leaves columns unqualified in single-table selects, so the correlated subqueries name tables explicitly.
   keysCount: sql<number>`(select count(*)::int from "api_keys" k where k."user_id" = "users"."id")`,
   platforms: sql<string[]>`coalesce((select array_agg(distinct k."platform"::text) from "api_keys" k where k."user_id" = "users"."id"), '{}')`,
+  solutions: sql<{ slug: string; name: string; platform: string }[]>`coalesce((
+    select json_agg(json_build_object('slug', s."slug", 'name', s."name", 'platform', s."platform") order by s."name")
+    from (select distinct so."slug", so."name", so."platform" from "api_keys" k join "solutions" so on so."id" = k."solution_id" where k."user_id" = "users"."id") s
+  ), '[]'::json)`,
 };
 
 type CustomerRow = {
@@ -25,6 +29,7 @@ type CustomerRow = {
   lastLoginAt: Date | null;
   keysCount: number;
   platforms: string[];
+  solutions: { slug: string; name: string; platform: string }[];
 };
 
 function toAdminCustomer(row: CustomerRow): AdminCustomer {
@@ -34,6 +39,7 @@ function toAdminCustomer(row: CustomerRow): AdminCustomer {
     status: row.status,
     keysCount: row.keysCount,
     platforms: [...row.platforms].sort() as AdminCustomer["platforms"],
+    solutions: row.solutions as AdminCustomer["solutions"],
     invitedAt: row.invitedAt.toISOString(),
     lastLoginAt: row.lastLoginAt?.toISOString() ?? null,
   };
@@ -47,6 +53,15 @@ export async function listCustomers(ctx: AppContext, query: CustomerQuery) {
     query.email ? ilike(users.email, containsPattern(query.email)) : undefined,
     from ? gte(users.createdAt, from) : undefined,
     to ? lt(users.createdAt, to) : undefined,
+    query.solution
+      ? exists(
+          ctx.db
+            .select({ one: sql`1` })
+            .from(apiKeys)
+            .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
+            .where(and(eq(apiKeys.userId, users.id), eq(solutions.slug, query.solution))),
+        )
+      : undefined,
     query.platform
       ? exists(
           ctx.db

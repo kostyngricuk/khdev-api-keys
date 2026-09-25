@@ -107,6 +107,8 @@ Tables:
 - The dashboard is available in Russian (default) and English. A RU/EN switch sits on the left of the top bar
   (and on the login screen); the choice is kept in the `lang` cookie. Dictionaries live in
   `apps/dashboard/app/i18n/{ru,en}.ts` and must have identical keys (enforced by a test).
+- Solution names are translated in the dashboard by slug (Personal Price → «Персональные скидки»); solutions
+  without a translation show the database name. The Customers table shows a Solutions column and filter.
 - Platforms are shown with one universal bold icon in the platform's brand color; the tooltip names the platform.
 
 ## 5. Business Rules
@@ -147,14 +149,14 @@ Tables:
   `inactive` keys to `active` (first-login activation); set `last_login_at`; create a session.
 - Keys added by an invite to a user who is already `active` are created `active`.
 
-### 5.4 Dev Admin (local development only)
+### 5.4 Dev Logins (every environment except production)
 
 - `pnpm db:seed:dev` upserts `admin@khdev.by` (`admin`, `active`) and `customer@khdev.by` (`customer`,
-  `active`, one active key per platform). It refuses to run unless `NODE_ENV=development`.
-- When `NODE_ENV=development` and `DEV_ADMIN_ENABLED=true`, `/api/auth/verify-code` accepts the
-  fixed code `123456` for `admin@khdev.by` and `customer@khdev.by` only. Normal codes keep working.
-- The API refuses to start if `DEV_ADMIN_ENABLED=true` and `NODE_ENV` is not `development`.
-- An endpoint test asserts the fixed code is rejected when `NODE_ENV=production`.
+  `active`, one active key per solution plus one expired key). It refuses to run when `NODE_ENV=production`.
+- When `NODE_ENV` is not `production`, `/api/auth/verify-code` accepts the fixed code `123456` for these two
+  emails only. Normal codes keep working. A missing `NODE_ENV` counts as production, so deployed servers
+  must never run with `development` or `test`.
+- Endpoint tests assert the fixed code is accepted in development/test and rejected in production.
 
 ### 5.5 API Keys
 
@@ -290,7 +292,8 @@ Docusaurus 3, docs-only mode (`routeBasePath: '/'`, no blog, no landing page). S
 
 `NODE_ENV`, `PORT`, `DATABASE_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`,
 `MAIL_FROM`, `SUPPORT_EMAIL`, `DASHBOARD_URL`, `DOCS_URL`, `WELCOME_VIDEO_URL`, `SERVICE_TOKEN`,
-`AUTH_CODE_PEPPER`, `KEY_TERM_DAYS`, `UPLOAD_DIR`, `DEV_ADMIN_ENABLED`, `APP_VERSION`, `GIT_SHA`.
+`AUTH_CODE_PEPPER`, `KEY_TERM_DAYS`, `UPLOAD_DIR`, `TRUST_PROXY`, `MAIL_TRANSPORT`, `DATABASE_POOL_MAX`,
+`APP_VERSION`, `GIT_SHA`.
 Validated at startup with Zod; startup fails on invalid config.
 
 Dashboard env: `API_URL`, `SESSION_SECRET`, `DOCS_URL`, `STORE_URL_BITRIX`, `STORE_URL_WORDPRESS`,

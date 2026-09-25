@@ -1,11 +1,12 @@
 import { createContext, useContext, useMemo } from "react";
-import { DEFAULT_LOCALE, dictionaryFor, errorText, translate, type Locale, type Vars } from "./index";
+import { DEFAULT_LOCALE, dictionaryFor, errorText, solutionName, translate, type Locale, type Vars } from "./index";
 
 type I18n = {
   locale: Locale;
   t: (key: string, vars?: Vars) => string;
   /** Translates an API error code, falling back to the API's own message. */
   errorText: (code: string, fallback?: string) => string;
+  solutionName: (solution: { slug: string; name: string }) => string;
   dict: ReturnType<typeof dictionaryFor>;
 };
 
@@ -14,6 +15,7 @@ function make(locale: Locale): I18n {
     locale,
     t: (key, vars) => translate(locale, key, vars),
     errorText: (code, fallback) => errorText(locale, code, fallback),
+    solutionName: (solution) => solutionName(locale, solution.slug, solution.name),
     dict: dictionaryFor(locale),
   };
 }

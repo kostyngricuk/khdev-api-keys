@@ -53,7 +53,7 @@ function formatMonth(month: string, locale: Locale) {
 
 export default function StatsPage({ loaderData }: Route.ComponentProps) {
   const { stats, filters } = loaderData;
-  const { t, locale } = useI18n();
+  const { t, locale, solutionName } = useI18n();
 
   const platformRows: ChartRow[] = CHART_PLATFORM_ORDER.map((p) => ({
     label: platformLabel(p, locale),
@@ -71,7 +71,7 @@ export default function StatsPage({ loaderData }: Route.ComponentProps) {
     color: statusHex(USER_STATUS_COLORS[s]),
   }));
   const solutionRows: ChartRow[] = stats.keysBySolution.map((s) => ({
-    label: s.name,
+    label: solutionName(s),
     value: s.count,
     color: PLATFORM_COLORS[s.platform],
   }));

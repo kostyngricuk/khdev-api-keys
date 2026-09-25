@@ -67,3 +67,16 @@ describe("errorText", () => {
     expect(errorText("ru", "SOMETHING_NEW")).toBe("Что-то пошло не так. Попробуйте ещё раз.");
   });
 });
+
+describe("solutionName", () => {
+  it("translates known solutions by slug", async () => {
+    const { solutionName } = await import("~/i18n");
+    expect(solutionName("ru", "personal-price", "Personal Price")).toBe("Персональные скидки");
+    expect(solutionName("en", "personal-price", "Personal Price")).toBe("Personal Price");
+  });
+
+  it("falls back to the name stored in the database", async () => {
+    const { solutionName } = await import("~/i18n");
+    expect(solutionName("ru", "new-solution", "New Solution")).toBe("New Solution");
+  });
+});

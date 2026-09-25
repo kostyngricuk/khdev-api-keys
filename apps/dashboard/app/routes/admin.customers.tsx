@@ -1,13 +1,13 @@
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { AlertDialog, Button, Card, DropdownMenu, Flex, IconButton, Table, Text } from "@radix-ui/themes";
-import { USER_STATUSES, type AdminCustomer, type Paginated, type UserStatus } from "@khdev/contracts";
+import { USER_STATUSES, type AdminCustomer, type Paginated, type Solution, type UserStatus } from "@khdev/contracts";
 import { Fragment, useState } from "react";
 import { useFetcher } from "react-router";
 import { EmptyState } from "~/components/EmptyState";
 import { Filters } from "~/components/Filters";
 import { PageHeader } from "~/components/PageHeader";
 import { Pagination } from "~/components/Pagination";
-import { PlatformBadge } from "~/components/PlatformBadge";
+import { SolutionLabel } from "~/components/SolutionLabel";
 import { UserStatusBadge } from "~/components/StatusBadge";
 import { useActionToast } from "~/components/Toaster";
 import { runAction, type ActionResult } from "~/lib/actions.server";
@@ -25,8 +25,11 @@ export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "cus
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "admin");
   const filters = parseFilters(new URL(request.url), { statuses: USER_STATUSES, allowEmail: true });
-  const customers = await api<Paginated<AdminCustomer>>(request, `/admin/customers?${toApiQuery(filters)}`);
-  return { customers, filters };
+  const [customers, solutions] = await Promise.all([
+    api<Paginated<AdminCustomer>>(request, `/admin/customers?${toApiQuery(filters)}`),
+    api<Solution[]>(request, "/solutions"),
+  ]);
+  return { customers, filters, solutions };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -127,11 +130,11 @@ function CustomerActions({ customer }: { customer: AdminCustomer }) {
 
 export default function CustomersPage({ loaderData }: Route.ComponentProps) {
   const { t } = useI18n();
-  const { customers, filters } = loaderData;
+  const { customers, filters, solutions } = loaderData;
   return (
     <>
       <PageHeader title={t("customers.title")} description={t("customers.description")} />
-      <Filters filters={filters} statuses={USER_STATUSES} showEmail />
+      <Filters filters={filters} statuses={USER_STATUSES} solutions={solutions} showEmail />
       <Card>
         {customers.items.length === 0 ? (
           <EmptyState title={t("customers.emptyTitle")} hint={t("customers.emptyHint")} />
@@ -142,7 +145,7 @@ export default function CustomersPage({ loaderData }: Route.ComponentProps) {
                 <Table.ColumnHeaderCell>{t("customers.colEmail")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>{t("customers.colStatus")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>{t("customers.colKeys")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>{t("customers.colPlatforms")}</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>{t("customers.colSolutions")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>{t("customers.colInvited")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>{t("customers.colLastSignIn")}</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell />
@@ -161,11 +164,13 @@ export default function CustomersPage({ loaderData }: Route.ComponentProps) {
                   </Table.Cell>
                   <Table.Cell>{customer.keysCount}</Table.Cell>
                   <Table.Cell>
-                    <Flex gap="1" wrap="wrap">
-                      {customer.platforms.length === 0 ? (
+                    <Flex direction="column" gap="1">
+                      {customer.solutions.length === 0 ? (
                         <Text color="gray">—</Text>
                       ) : (
-                        customer.platforms.map((p) => <PlatformBadge key={p} platform={p} />)
+                        customer.solutions.map((s) => (
+                          <SolutionLabel key={s.slug} solution={s} platform={s.platform} />
+                        ))
                       )}
                     </Flex>
                   </Table.Cell>

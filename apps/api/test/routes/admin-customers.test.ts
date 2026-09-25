@@ -28,6 +28,10 @@ describe("GET /api/admin/customers", () => {
     const alice = body.items.find((c: { email: string }) => c.email === "alice@example.com");
     expect(alice).toMatchObject({ id: a.id, status: "active", keysCount: 2, lastLoginAt: null });
     expect([...alice.platforms].sort()).toEqual(["shopify", "wordpress"]);
+    expect(alice.solutions).toEqual([
+      { slug: "test-shopify", name: "Test shopify", platform: "shopify" },
+      { slug: "test-wordpress", name: "Test wordpress", platform: "wordpress" },
+    ]);
     expect(body.items.some((c: { email: string }) => c.email === "boss@khdev.by")).toBe(false);
   });
 
@@ -43,6 +47,8 @@ describe("GET /api/admin/customers", () => {
     expect((await get("email=%25")).total).toBe(0);
     expect((await get("status=blocked")).total).toBe(1);
     expect((await get("platform=bitrix")).total).toBe(1);
+    expect((await get("solution=personal-price")).total).toBe(1);
+    expect((await get("solution=test-wordpress")).total).toBe(0);
     expect((await get("dateFrom=2026-08-15")).total).toBe(1);
   });
 });

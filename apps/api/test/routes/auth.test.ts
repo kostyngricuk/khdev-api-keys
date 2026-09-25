@@ -193,11 +193,6 @@ describe("POST /api/auth/verify-code", () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it("does not accept the dev admin code when the dev admin is disabled", async () => {
-    await t.createUser({ email: "admin@khdev.by", role: "admin" });
-    const res = await verifyCode("admin@khdev.by", "123456");
-    expect(res.statusCode).toBe(401);
-  });
 });
 
 describe("GET /api/auth/me and POST /api/auth/logout", () => {

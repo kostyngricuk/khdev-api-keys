@@ -36,6 +36,9 @@ export const ru: Dictionary = {
     removed: "Удалён",
     expired: "Истёк",
   },
+  solutionNames: {
+    "personal-price": "Персональные скидки",
+  },
   platform: {
     bitrix: "1С-Битрикс",
     wordpress: "WordPress",
@@ -122,7 +125,7 @@ export const ru: Dictionary = {
     colEmail: "Email",
     colStatus: "Статус",
     colKeys: "Ключи",
-    colPlatforms: "Платформы",
+    colSolutions: "Решения",
     colInvited: "Приглашён",
     colLastSignIn: "Последний вход",
     actionsFor: "Действия для {email}",

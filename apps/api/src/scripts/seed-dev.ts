@@ -7,11 +7,7 @@ const { db, close } = createDatabase(config.databaseUrl);
 try {
   await seedDevUsers(db, config);
   console.log(`Dev users ready: ${DEV_ADMIN_EMAIL} (admin), ${DEV_CUSTOMER_EMAIL} (customer)`);
-  console.log(
-    config.devAdminEnabled
-      ? `Sign in with code ${DEV_ADMIN_CODE}`
-      : "Set DEV_ADMIN_ENABLED=true in apps/api/.env to sign in with the fixed code",
-  );
+  console.log(`Sign in with code ${DEV_ADMIN_CODE}`);
 } finally {
   await close();
 }

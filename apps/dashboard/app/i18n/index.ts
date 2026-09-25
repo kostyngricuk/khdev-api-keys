@@ -45,3 +45,8 @@ export function errorText(locale: Locale, code: string, fallback?: string): stri
     ? translate(locale, `errors.${code}`)
     : (fallback ?? translate(locale, "errors.generic"));
 }
+
+/** Localized solution name, falling back to the name stored in the database. */
+export function solutionName(locale: Locale, slug: string, fallback: string): string {
+  return hasTranslation(locale, `solutionNames.${slug}`) ? translate(locale, `solutionNames.${slug}`) : fallback;
+}

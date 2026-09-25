@@ -28,7 +28,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 /** A GET form: filters are kept in the URL and read by the route loader. */
 export function Filters({ filters, statuses, solutions, showEmail = false, showStatus = true }: Props) {
-  const { t, locale } = useI18n();
+  const { t, locale, solutionName } = useI18n();
   const location = useLocation();
   return (
     <Card mb="4">
@@ -48,7 +48,7 @@ export function Filters({ filters, statuses, solutions, showEmail = false, showS
                   <Select.Item value="all">{t("filters.allSolutions")}</Select.Item>
                   {solutions.map((s) => (
                     <Select.Item key={s.slug} value={s.slug}>
-                      {s.name}
+                      {solutionName(s)}
                     </Select.Item>
                   ))}
                 </Select.Content>

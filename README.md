@@ -37,15 +37,15 @@ Open <http://localhost:3000>.
 
 ### Local accounts
 
-Local development only (`NODE_ENV=development` and `DEV_ADMIN_ENABLED=true` in `apps/api/.env`).
-`pnpm db:seed:dev` creates both; the customer gets one active key per solution.
+Available whenever `NODE_ENV` is not `production` (a missing `NODE_ENV` counts as production).
+`pnpm db:seed:dev` creates both; the customer gets one active key per solution and one expired key.
 
 | Role     | Email               | Code     |
 | -------- | ------------------- | -------- |
 | Admin    | `admin@khdev.by`    | `123456` |
 | Customer | `customer@khdev.by` | `123456` |
 
-The API refuses to start if `DEV_ADMIN_ENABLED=true` is set in any other environment.
+Always run deployed servers with `NODE_ENV=production`.
 
 ### Invite a customer
 

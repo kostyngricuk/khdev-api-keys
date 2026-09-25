@@ -38,7 +38,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUrls: Record<Platform, string> }) {
-  const { t } = useI18n();
+  const { t, solutionName } = useI18n();
   return (
     <Dialog.Root>
       <Dialog.Trigger>
@@ -64,7 +64,7 @@ function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUr
                   <Flex align="center" gap="2">
                     <PlatformIcon platform={solution.platform} size={24} focusable={false} />
                     <Text size="2" weight="medium">
-                      {solution.name}
+                      {solutionName(solution)}
                     </Text>
                   </Flex>
                   <Flex align="center" gap="1">

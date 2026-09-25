@@ -66,7 +66,7 @@ export async function requestLoginCode(ctx: AppContext, email: string) {
 }
 
 function isDevLogin(ctx: AppContext, email: string, code: string) {
-  return ctx.config.isDev && ctx.config.devAdminEnabled && DEV_LOGIN_EMAILS.includes(email) && code === DEV_ADMIN_CODE;
+  return ctx.config.devLoginEnabled && DEV_LOGIN_EMAILS.includes(email) && code === DEV_ADMIN_CODE;
 }
 
 async function checkCode(ctx: AppContext, userId: string, code: string) {

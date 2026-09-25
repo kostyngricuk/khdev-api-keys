@@ -13,6 +13,7 @@ export type AdminKeyQuery = z.infer<typeof adminKeyQuery>;
 
 export const customerQuery = listQuerySchema.extend({
   platform: platformSchema.optional(),
+  solution: solutionSlugSchema.optional(),
   status: userStatusSchema.optional(),
   email: z.string().trim().max(254).optional(),
 });
@@ -24,6 +25,8 @@ export const adminCustomer = z.object({
   status: userStatusSchema,
   keysCount: z.number().int(),
   platforms: z.array(platformSchema),
+  /** Distinct solutions the customer owns keys for, sorted by name. */
+  solutions: z.array(z.object({ slug: z.string(), name: z.string(), platform: platformSchema })),
   invitedAt: dateTime,
   lastLoginAt: dateTime.nullable(),
 });
