@@ -61,6 +61,11 @@ export default function StatsPage({ loaderData }: Route.ComponentProps) {
     value: stats.customersByStatus[s],
     color: statusHex(USER_STATUS_COLORS[s]),
   }));
+  const solutionRows: ChartRow[] = stats.keysBySolution.map((s) => ({
+    label: s.name,
+    value: s.count,
+    color: PLATFORM_COLORS[s.platform],
+  }));
   const monthRows: ChartRow[] = stats.keysPerMonth.map((m) => ({ label: formatMonth(m.month), value: m.count }));
   const activeCustomers = stats.customersByStatus.active;
 
@@ -85,6 +90,15 @@ export default function StatsPage({ loaderData }: Route.ComponentProps) {
             </Flex>
           ) : (
             <TrendLineChart rows={monthRows} />
+          )}
+        </ChartCard>
+        <ChartCard title="Keys by solution" description="Bars use the solution's platform color" rows={solutionRows} valueLabel="Keys">
+          {solutionRows.length === 0 ? (
+            <Flex align="center" justify="center" style={{ height: "100%" }}>
+              <Text color="gray">No keys in this period</Text>
+            </Flex>
+          ) : (
+            <CategoryBarChart rows={solutionRows} />
           )}
         </ChartCard>
         <ChartCard title="Keys by status" rows={keyStatusRows} valueLabel="Keys">

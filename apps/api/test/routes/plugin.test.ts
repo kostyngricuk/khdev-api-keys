@@ -15,9 +15,10 @@ afterAll(async () => {
   await t.close();
 });
 
-const validate = (key: string, domain: string) =>
-  t.app.inject({ method: "POST", url: "/api/keys/validate", payload: { key, domain } });
-const apply = (key: string, domain: string) => t.app.inject({ method: "POST", url: "/api/keys/apply", payload: { key, domain } });
+const validate = (key: string, domain: string, solution?: string) =>
+  t.app.inject({ method: "POST", url: "/api/keys/validate", payload: { key, domain, solution } });
+const apply = (key: string, domain: string, solution?: string) =>
+  t.app.inject({ method: "POST", url: "/api/keys/apply", payload: { key, domain, solution } });
 
 async function customerKey(overrides: Partial<Omit<Parameters<TestApp["createKey"]>[0], "userId">> = {}) {
   const user = await t.createUser({ email: "owner@example.com" });
@@ -50,6 +51,7 @@ describe("POST /api/keys/validate", () => {
       valid: true,
       status: "active",
       platform: "shopify",
+      solution: "test-shopify",
       domain: "shop.com",
       expiresAt: key.expiresAt.toISOString(),
       activationsUsed: 0,
@@ -87,6 +89,24 @@ describe("POST /api/keys/validate", () => {
     const { user, key } = await customerKey();
     await t.db.update(users).set({ status: "removed" }).where(eq(users.id, user.id));
     expect((await validate(key.key, "shop.com")).statusCode).toBe(404);
+  });
+});
+
+describe("solution check", () => {
+  it("accepts a key for the solution the plugin names", async () => {
+    const { key } = await customerKey({ platform: "bitrix" });
+    const res = await apply(key.key, "a.com", "personal-price");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().solution).toBe("personal-price");
+  });
+
+  it("refuses a key that belongs to another solution", async () => {
+    const { key } = await customerKey({ platform: "wordpress" });
+    for (const call of [validate, apply]) {
+      const res = await call(key.key, "a.com", "personal-price");
+      expect(res.statusCode).toBe(409);
+      expect(res.json().error.code).toBe("SOLUTION_MISMATCH");
+    }
   });
 });
 

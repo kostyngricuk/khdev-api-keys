@@ -17,6 +17,7 @@ import { authRoutes } from "./routes/auth.js";
 import { inviteRoutes } from "./routes/invites.js";
 import { keyRoutes } from "./routes/keys.js";
 import { pluginRoutes } from "./routes/plugin.js";
+import { solutionRoutes } from "./routes/solutions.js";
 import { supportRoutes } from "./routes/support.js";
 import { systemRoutes } from "./routes/system.js";
 
@@ -86,6 +87,7 @@ export async function buildApp(deps: AppDeps) {
       await api.register(pluginRoutes);
       await api.register(adminRoutes);
       await api.register(supportRoutes);
+      await api.register(solutionRoutes);
     },
     { prefix: "/api" },
   );

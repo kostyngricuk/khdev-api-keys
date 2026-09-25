@@ -37,9 +37,13 @@ export function loginCodeEmail(to: string, code: string): MailMessage {
 }
 
 type InviteLinks = { loginUrl: string; docsUrl: string; videoUrl: string };
+type PurchasedSolution = { name: string; platform: Platform };
 
-export function inviteEmail(to: string, platforms: Platform[], links: InviteLinks): MailMessage {
-  const list = platforms.map((p) => PLATFORM_LABELS[p]).join(", ");
+const solutionList = (items: PurchasedSolution[]) =>
+  [...new Set(items.map((s) => `${s.name} (${PLATFORM_LABELS[s.platform]})`))].join(", ");
+
+export function inviteEmail(to: string, purchased: PurchasedSolution[], links: InviteLinks): MailMessage {
+  const list = solutionList(purchased);
   return {
     to,
     subject: "Your KHDev plugin license is ready",
@@ -66,8 +70,8 @@ Welcome video: <a href="${escapeHtml(links.videoUrl)}">${escapeHtml(links.videoU
   };
 }
 
-export function newKeysEmail(to: string, platforms: Platform[], links: InviteLinks): MailMessage {
-  const list = platforms.map((p) => PLATFORM_LABELS[p]).join(", ");
+export function newKeysEmail(to: string, purchased: PurchasedSolution[], links: InviteLinks): MailMessage {
+  const list = solutionList(purchased);
   return {
     to,
     subject: "New KHDev license keys were added to your account",

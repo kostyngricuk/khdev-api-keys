@@ -27,6 +27,11 @@ describe("parseFilters", () => {
     expect(parseFilters(url("email=%20alice%20"), { allowEmail: true })).toEqual({ email: "alice", page: 1 });
   });
 
+  it("reads a solution slug and ignores malformed ones", () => {
+    expect(parseFilters(url("solution=personal-price"))).toEqual({ solution: "personal-price", page: 1 });
+    expect(parseFilters(url("solution=Bad%20Slug!"))).toEqual({ page: 1 });
+  });
+
   it("validates status against the provided list", () => {
     expect(parseFilters(url("status=blocked"), { statuses: ["active", "inactive", "expired"] })).toEqual({ page: 1 });
     expect(parseFilters(url("status=blocked"), { statuses: ["blocked"] })).toEqual({ status: "blocked", page: 1 });
@@ -37,5 +42,6 @@ describe("toApiQuery", () => {
   it("serializes set filters only", () => {
     expect(toApiQuery({ platform: "wordpress", page: 1 })).toBe("platform=wordpress&page=1");
     expect(toApiQuery({ page: 3, email: "a b" })).toBe("email=a+b&page=3");
+    expect(toApiQuery({ page: 1, solution: "personal-price" })).toBe("solution=personal-price&page=1");
   });
 });

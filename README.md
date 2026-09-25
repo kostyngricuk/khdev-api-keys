@@ -1,6 +1,7 @@
 # KHDev Keys
 
-Invite-only admin panel for the license keys of KHDev plugins (1С-Битрикс, WordPress, OpenCart, Shopify).
+Invite-only admin panel for the license keys of KHDev solutions. Solutions live in the `solutions` table;
+the first one is **Personal Price** for 1С-Битрикс. Supported platforms: 1С-Битрикс, WordPress, OpenCart, Shopify.
 
 | App              | Stack                                             | Port |
 | ---------------- | ------------------------------------------------- | ---- |
@@ -37,7 +38,7 @@ Open <http://localhost:3000>.
 ### Local accounts
 
 Local development only (`NODE_ENV=development` and `DEV_ADMIN_ENABLED=true` in `apps/api/.env`).
-`pnpm db:seed:dev` creates both; the customer gets one active key per platform.
+`pnpm db:seed:dev` creates both; the customer gets one active key per solution.
 
 | Role     | Email               | Code     |
 | -------- | ------------------- | -------- |
@@ -52,7 +53,7 @@ The API refuses to start if `DEV_ADMIN_ENABLED=true` is set in any other environ
 curl -X POST http://localhost:3001/api/invites \
   -H "X-Service-Token: dev-service-token-change-me" \
   -H "Content-Type: application/json" \
-  -d '{"email":"client@shop.com","platforms":["wordpress","shopify"]}'
+  -d '{"email":"client@shop.com","solutions":["personal-price"]}'
 ```
 
 The invitation and the sign-in codes arrive in Mailpit (<http://localhost:8025>).

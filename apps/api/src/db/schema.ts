@@ -34,6 +34,16 @@ export const users = pgTable(
   ],
 );
 
+/** Products that need a license key. Seeded by the migration with Personal Price (1С-Битрикс). */
+export const solutions = pgTable("solutions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  platform: platform("platform").notNull(),
+  storeUrl: text("store_url"),
+  ...timestamps,
+});
+
 export const apiKeys = pgTable(
   "api_keys",
   {
@@ -41,6 +51,10 @@ export const apiKeys = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
+    solutionId: uuid("solution_id")
+      .notNull()
+      .references(() => solutions.id),
+    // Copied from the solution when the key is created, for filtering and stats.
     platform: platform("platform").notNull(),
     key: text("key").notNull().unique(),
     status: keyStatus("status").notNull().default("inactive"),

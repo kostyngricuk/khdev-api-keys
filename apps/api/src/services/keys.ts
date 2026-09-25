@@ -2,7 +2,7 @@ import { and, count, desc, eq, gte, ilike, lt, lte, ne, sql } from "drizzle-orm"
 import type { AdminKey, AuthUser, CustomerKey, KeyStatus, Platform } from "@khdev/contracts";
 import type { AppContext } from "../context.js";
 import type { Executor } from "../db/client.js";
-import { apiKeys, keyActivations, users } from "../db/schema.js";
+import { apiKeys, keyActivations, solutions, users } from "../db/schema.js";
 import { conflict, notFound } from "../lib/errors.js";
 import { containsPattern, dateRange, pageOffset } from "../lib/filters.js";
 import { generateKey, maskKey, rebuildKeyExpiry } from "../lib/key.js";
@@ -13,27 +13,32 @@ export function termEnd(ctx: AppContext, from: Date): Date {
   return new Date(from.getTime() + ctx.config.keyTermDays * DAY_MS);
 }
 
-/** Keys are only ever created for a purchase (invite). */
+type SolutionRef = { id: string; slug: string; platform: Platform };
+
+/** Keys are only ever created for a purchase (invite): one key per purchased solution. */
 export async function createKeysForUser(
   ctx: AppContext,
   db: Executor,
-  input: { userId: string; platforms: Platform[]; status: KeyStatus },
+  input: { userId: string; solutions: SolutionRef[]; status: KeyStatus },
 ) {
   const createdAt = ctx.now();
   const expiresAt = termEnd(ctx, createdAt);
-  return db
+  const rows = await db
     .insert(apiKeys)
     .values(
-      input.platforms.map((platform) => ({
+      input.solutions.map((solution) => ({
         userId: input.userId,
-        platform,
+        solutionId: solution.id,
+        platform: solution.platform,
         status: input.status,
         key: generateKey(createdAt, expiresAt),
         createdAt,
         expiresAt,
       })),
     )
-    .returning({ id: apiKeys.id, platform: apiKeys.platform });
+    .returning({ id: apiKeys.id, platform: apiKeys.platform, solutionId: apiKeys.solutionId });
+  const slugs = new Map(input.solutions.map((s) => [s.id, s.slug]));
+  return rows.map((row) => ({ id: row.id, platform: row.platform, solution: slugs.get(row.solutionId)! }));
 }
 
 // ---- Reading keys -------------------------------------------------------
@@ -45,6 +50,8 @@ const keyColumns = {
   userId: apiKeys.userId,
   email: users.email,
   platform: apiKeys.platform,
+  solutionSlug: solutions.slug,
+  solutionName: solutions.name,
   key: apiKeys.key,
   status: apiKeys.status,
   activationLimit: apiKeys.activationLimit,
@@ -59,6 +66,8 @@ export type KeyRow = {
   userId: string;
   email: string;
   platform: Platform;
+  solutionSlug: string;
+  solutionName: string;
   key: string;
   status: KeyStatus;
   activationLimit: number;
@@ -72,6 +81,7 @@ export function toCustomerKey(row: KeyRow, options: { mask?: boolean } = {}): Cu
   return {
     id: row.id,
     platform: row.platform,
+    solution: { slug: row.solutionSlug, name: row.solutionName },
     key: options.mask ? maskKey(row.key) : row.key,
     status: row.status,
     activationsUsed: row.activationsUsed,
@@ -97,6 +107,7 @@ export async function refreshExpired(ctx: AppContext, db: Executor = ctx.db) {
 export type KeyFilters = {
   userId?: string;
   platform?: Platform;
+  solution?: string;
   status?: KeyStatus;
   /** Owner email substring (admin list only). */
   email?: string;
@@ -112,6 +123,7 @@ export async function listKeys(ctx: AppContext, filters: KeyFilters): Promise<{ 
   const where = and(
     filters.userId ? eq(apiKeys.userId, filters.userId) : undefined,
     filters.platform ? eq(apiKeys.platform, filters.platform) : undefined,
+    filters.solution ? eq(solutions.slug, filters.solution) : undefined,
     filters.status ? eq(apiKeys.status, filters.status) : undefined,
     filters.email ? ilike(users.email, containsPattern(filters.email)) : undefined,
     from ? gte(apiKeys.createdAt, from) : undefined,
@@ -124,11 +136,17 @@ export async function listKeys(ctx: AppContext, filters: KeyFilters): Promise<{ 
       .select(keyColumns)
       .from(apiKeys)
       .innerJoin(users, eq(users.id, apiKeys.userId))
+      .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
       .where(where)
       .orderBy(desc(apiKeys.createdAt), desc(apiKeys.id))
       .limit(limit)
       .offset(offset),
-    ctx.db.select({ total: count() }).from(apiKeys).innerJoin(users, eq(users.id, apiKeys.userId)).where(where),
+    ctx.db
+      .select({ total: count() })
+      .from(apiKeys)
+      .innerJoin(users, eq(users.id, apiKeys.userId))
+      .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
+      .where(where),
   ]);
   return { rows, total: totalRow?.total ?? 0 };
 }
@@ -138,6 +156,7 @@ export async function getKeyRow(db: Executor, id: string): Promise<KeyRow | null
     .select(keyColumns)
     .from(apiKeys)
     .innerJoin(users, eq(users.id, apiKeys.userId))
+    .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
     .where(eq(apiKeys.id, id))
     .limit(1);
   return row ?? null;

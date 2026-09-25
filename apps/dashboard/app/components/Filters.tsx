@@ -1,12 +1,14 @@
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Button, Card, Flex, Select, Text, TextField } from "@radix-ui/themes";
-import { PLATFORMS } from "@khdev/contracts";
+import { PLATFORMS, type Solution } from "@khdev/contracts";
 import { Form, Link, useLocation } from "react-router";
 import type { Filters as FilterValues } from "~/lib/filters";
 import { platformLabel, statusLabel } from "~/lib/format";
 
 type Props = {
   filters: FilterValues;
+  /** When given, a Solution select is shown (key pages). */
+  solutions?: Pick<Solution, "slug" | "name">[];
   statuses: readonly string[];
   showEmail?: boolean;
   showStatus?: boolean;
@@ -24,7 +26,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /** A GET form: filters are kept in the URL and read by the route loader. */
-export function Filters({ filters, statuses, showEmail = false, showStatus = true }: Props) {
+export function Filters({ filters, statuses, solutions, showEmail = false, showStatus = true }: Props) {
   const location = useLocation();
   return (
     <Card mb="4">
@@ -36,6 +38,21 @@ export function Filters({ filters, statuses, showEmail = false, showStatus = tru
           <Field label="Date to">
             <TextField.Root type="date" name="dateTo" defaultValue={filters.dateTo ?? ""} />
           </Field>
+          {solutions && (
+            <Field label="Solution">
+              <Select.Root name="solution" defaultValue={filters.solution ?? "all"}>
+                <Select.Trigger style={{ minWidth: 160 }} />
+                <Select.Content>
+                  <Select.Item value="all">All solutions</Select.Item>
+                  {solutions.map((s) => (
+                    <Select.Item key={s.slug} value={s.slug}>
+                      {s.name}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+            </Field>
+          )}
           <Field label="Platform">
             <Select.Root name="platform" defaultValue={filters.platform ?? "all"}>
               <Select.Trigger style={{ minWidth: 150 }} />

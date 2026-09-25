@@ -40,7 +40,12 @@ describe("GET /api/admin/keys", () => {
     const body = res.json();
     expect(body.total).toBe(2);
     const itemA = body.items.find((i: { id: string }) => i.id === keyA.id);
-    expect(itemA).toMatchObject({ userId: a.id, email: "a@example.com", platform: "bitrix" });
+    expect(itemA).toMatchObject({
+      userId: a.id,
+      email: "a@example.com",
+      platform: "bitrix",
+      solution: { slug: "personal-price", name: "Personal Price" },
+    });
     expect(itemA.key).toBe(`${keyA.key.slice(0, 4)}…${keyA.key.slice(-4)}`);
     expect(JSON.stringify(body)).not.toContain(keyA.key);
   });

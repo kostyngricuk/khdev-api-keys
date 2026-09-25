@@ -2,7 +2,7 @@ import { and, count, eq } from "drizzle-orm";
 import type { ValidateResponse } from "@khdev/contracts";
 import type { AppContext } from "../context.js";
 import type { Executor } from "../db/client.js";
-import { apiKeys, keyActivations, users } from "../db/schema.js";
+import { apiKeys, keyActivations, solutions, users } from "../db/schema.js";
 import { badRequest, conflict, forbidden, notFound } from "../lib/errors.js";
 import { normalizeDomain } from "../lib/domain.js";
 import { parseKey } from "../lib/key.js";
@@ -11,13 +11,23 @@ import { refreshExpired } from "./keys.js";
 type LockableKey = {
   id: string;
   platform: ValidateResponse["platform"];
+  solution: string;
   status: ValidateResponse["status"];
   activationLimit: number;
   expiresAt: Date;
   ownerStatus: string;
 };
 
-function parseInput(input: { key: string; domain: string }) {
+type PluginInput = { key: string; domain: string; solution?: string };
+
+/** A plugin that names its solution must not accept a key bought for another product. */
+function checkSolution(row: LockableKey, input: PluginInput) {
+  if (input.solution && input.solution !== row.solution) {
+    throw conflict("SOLUTION_MISMATCH", "This key belongs to another solution");
+  }
+}
+
+function parseInput(input: PluginInput) {
   const parsed = parseKey(input.key);
   if (!parsed) throw notFound("KEY_NOT_FOUND", "Key not found");
   const domain = normalizeDomain(input.domain);
@@ -30,6 +40,7 @@ async function loadKey(db: Executor, key: string, lock: boolean): Promise<Lockab
     .select({
       id: apiKeys.id,
       platform: apiKeys.platform,
+      solution: solutions.slug,
       status: apiKeys.status,
       activationLimit: apiKeys.activationLimit,
       expiresAt: apiKeys.expiresAt,
@@ -37,6 +48,7 @@ async function loadKey(db: Executor, key: string, lock: boolean): Promise<Lockab
     })
     .from(apiKeys)
     .innerJoin(users, eq(users.id, apiKeys.userId))
+    .innerJoin(solutions, eq(solutions.id, apiKeys.solutionId))
     .where(eq(apiKeys.key, key))
     .limit(1);
   const [row] = await (lock ? query.for("update", { of: apiKeys }) : query);
@@ -58,6 +70,7 @@ async function describe(db: Executor, row: LockableKey, domain: string): Promise
     valid: row.status === "active",
     status: row.status,
     platform: row.platform,
+    solution: row.solution,
     domain,
     expiresAt: row.expiresAt.toISOString(),
     activationsUsed: used?.n ?? 0,
@@ -66,19 +79,22 @@ async function describe(db: Executor, row: LockableKey, domain: string): Promise
   };
 }
 
-export async function validateKey(ctx: AppContext, input: { key: string; domain: string }) {
+export async function validateKey(ctx: AppContext, input: PluginInput) {
   const { key, domain } = parseInput(input);
   await refreshExpired(ctx);
-  return describe(ctx.db, await loadKey(ctx.db, key, false), domain);
+  const row = await loadKey(ctx.db, key, false);
+  checkSolution(row, input);
+  return describe(ctx.db, row, domain);
 }
 
 /** One activation per distinct domain; the key row is locked so concurrent applies cannot exceed the limit. */
-export async function applyKey(ctx: AppContext, input: { key: string; domain: string }) {
+export async function applyKey(ctx: AppContext, input: PluginInput) {
   const { key, domain } = parseInput(input);
   await refreshExpired(ctx);
 
   return ctx.db.transaction(async (tx) => {
     const row = await loadKey(tx, key, true);
+    checkSolution(row, input);
     if (row.status === "expired") throw conflict("KEY_EXPIRED", "The key has expired");
     if (row.status === "inactive") throw conflict("KEY_INACTIVE", "The key is not active");
 

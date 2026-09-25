@@ -1,10 +1,11 @@
 import { and, eq, ne } from "drizzle-orm";
-import { PLATFORMS, type UserRole } from "@khdev/contracts";
+import type { UserRole } from "@khdev/contracts";
 import { DEV_ADMIN_EMAIL, DEV_CUSTOMER_EMAIL, type Config } from "../config.js";
 import type { AppContext } from "../context.js";
 import type { Database } from "../db/client.js";
 import { apiKeys, users } from "../db/schema.js";
 import { createKeysForUser } from "../services/keys.js";
+import { listSolutions } from "../services/solutions.js";
 
 async function upsertDevUser(db: Database, email: string, role: UserRole) {
   const [existing] = await db
@@ -22,7 +23,7 @@ async function upsertDevUser(db: Database, email: string, role: UserRole) {
 
 /**
  * Local development only: makes sure admin@khdev.by (admin) and customer@khdev.by (customer, one active key
- * per platform) exist and are active.
+ * per solution) exist and are active.
  */
 export async function seedDevUsers(db: Database, config: Config) {
   if (!config.isDev) throw new Error("Dev users can only be seeded when NODE_ENV=development");
@@ -33,6 +34,6 @@ export async function seedDevUsers(db: Database, config: Config) {
   const [hasKeys] = await db.select({ id: apiKeys.id }).from(apiKeys).where(eq(apiKeys.userId, customerId)).limit(1);
   if (!hasKeys) {
     const ctx = { config, now: () => new Date() } as AppContext;
-    await createKeysForUser(ctx, db, { userId: customerId, platforms: [...PLATFORMS], status: "active" });
+    await createKeysForUser(ctx, db, { userId: customerId, solutions: await listSolutions(db), status: "active" });
   }
 }

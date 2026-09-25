@@ -48,7 +48,17 @@ describe("GET /api/keys", () => {
       activationsUsed: 1,
       activationLimit: 3,
       regeneratedAt: null,
+      solution: { slug: "test-wordpress", name: "Test wordpress" },
     });
+  });
+
+  it("filters by solution", async () => {
+    const { user, headers } = await t.createCustomer();
+    await t.createKey({ userId: user.id, platform: "bitrix" });
+    await t.createKey({ userId: user.id, platform: "wordpress" });
+    const res = await t.app.inject({ method: "GET", url: "/api/keys?solution=personal-price", headers });
+    expect(res.json().total).toBe(1);
+    expect(res.json().items[0].solution).toEqual({ slug: "personal-price", name: "Personal Price" });
   });
 
   it("filters by platform, status and created date, and paginates", async () => {

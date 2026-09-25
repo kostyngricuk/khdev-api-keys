@@ -17,14 +17,14 @@ afterAll(async () => {
 const devConfig = loadConfig({ NODE_ENV: "development", DATABASE_URL: "postgres://x:y@localhost:5432/z" });
 
 describe("seedDevUsers", () => {
-  it("creates the dev customer with one active key per platform, once", async () => {
+  it("creates the dev customer with one active key per solution, once", async () => {
     await seedDevUsers(t.db, devConfig);
     await seedDevUsers(t.db, devConfig);
     const [customer, ...others] = await t.db.select().from(users).where(eq(users.email, "customer@khdev.by"));
     expect(others).toHaveLength(0);
     expect(customer).toMatchObject({ role: "customer", status: "active" });
     const keys = await t.db.select().from(apiKeys).where(eq(apiKeys.userId, customer!.id));
-    expect(keys.map((k) => k.platform).sort()).toEqual(["bitrix", "opencart", "shopify", "wordpress"]);
+    expect(keys.map((k) => k.platform)).toEqual(["bitrix"]);
     expect(keys.every((k) => k.status === "active")).toBe(true);
   });
 

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { KeyStatus, Platform, UserRole, UserStatus } from "@khdev/contracts";
@@ -81,21 +81,48 @@ export async function createTestApp(options: TestAppOptions = {}) {
     return user!;
   }
 
+  /** Test solutions per platform; `personal-price` (bitrix) is seeded by the migration. */
+  const solutionIds = new Map<string, string>();
+  async function solutionFor(input: { solution?: string; platform: Platform }) {
+    const slug = input.solution ?? (input.platform === "bitrix" ? "personal-price" : `test-${input.platform}`);
+    const cached = solutionIds.get(slug);
+    if (cached) return { id: cached, slug };
+    const [existing] = await db.select().from(schema.solutions).where(eq(schema.solutions.slug, slug));
+    const row =
+      existing ??
+      (await db
+        .insert(schema.solutions)
+        .values({ slug, name: `Test ${input.platform}`, platform: input.platform })
+        .returning())[0]!;
+    solutionIds.set(slug, row.id);
+    return { id: row.id, slug };
+  }
+
+  async function createSolution(input: { slug: string; name: string; platform: Platform }) {
+    const [row] = await db.insert(schema.solutions).values(input).returning();
+    solutionIds.set(row!.slug, row!.id);
+    return row!;
+  }
+
   async function createKey(input: {
     userId: string;
     platform?: Platform;
+    solution?: string;
     status?: KeyStatus;
     createdAt?: Date;
     expiresAt?: Date;
     activationLimit?: number;
   }) {
+    const platform = input.platform ?? "wordpress";
+    const solution = await solutionFor({ solution: input.solution, platform });
     const createdAt = input.createdAt ?? clock.now();
     const expiresAt = input.expiresAt ?? new Date(createdAt.getTime() + 365 * DAY_MS);
     const [key] = await db
       .insert(schema.apiKeys)
       .values({
         userId: input.userId,
-        platform: input.platform ?? "wordpress",
+        solutionId: solution.id,
+        platform,
         status: input.status ?? "active",
         key: generateKey(createdAt, expiresAt),
         createdAt,
@@ -136,7 +163,22 @@ export async function createTestApp(options: TestAppOptions = {}) {
     await client.close();
   }
 
-  return { app, db, mailer, config, clock, createUser, createKey, authHeader, createCustomer, createAdmin, reset, close };
+  return {
+    app,
+    db,
+    mailer,
+    config,
+    clock,
+    createUser,
+    createKey,
+    createSolution,
+    solutionFor,
+    authHeader,
+    createCustomer,
+    createAdmin,
+    reset,
+    close,
+  };
 }
 
 export type TestApp = Awaited<ReturnType<typeof createTestApp>>;

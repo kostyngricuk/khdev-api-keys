@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { dateOnly, dateTime, listQuerySchema } from "./common.js";
 import { keyStatusSchema, platformSchema, USER_STATUSES, KEY_STATUSES, PLATFORMS, userStatusSchema } from "./enums.js";
+import { solutionSlugSchema } from "./solutions.js";
 
 export const adminKeyQuery = listQuerySchema.extend({
   platform: platformSchema.optional(),
+  solution: solutionSlugSchema.optional(),
   status: keyStatusSchema.optional(),
   email: z.string().trim().max(254).optional(),
 });
@@ -47,6 +49,9 @@ export const statsResponse = z.object({
   totalCustomers: z.number().int(),
   totalKeys: z.number().int(),
   totalActivations: z.number().int(),
+  keysBySolution: z.array(
+    z.object({ slug: z.string(), name: z.string(), platform: platformSchema, count: z.number().int() }),
+  ),
   keysPerMonth: z.array(z.object({ month: z.string(), count: z.number().int() })),
 });
 export type StatsResponse = z.infer<typeof statsResponse>;

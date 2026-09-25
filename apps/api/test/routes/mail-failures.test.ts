@@ -22,7 +22,7 @@ describe("when email delivery fails", () => {
       method: "POST",
       url: "/api/invites",
       headers: { "x-service-token": TEST_SERVICE_TOKEN },
-      payload: { email: "buyer@example.com", platforms: ["wordpress"] },
+      payload: { email: "buyer@example.com", solutions: ["personal-price"] },
     });
     expect(res.statusCode).toBe(201);
     const [user] = await t.db.select().from(users).where(eq(users.email, "buyer@example.com"));

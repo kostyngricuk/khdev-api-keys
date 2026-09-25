@@ -26,6 +26,7 @@ Enums:
 | User status | `inactive`, `active`, `blocked`, `removed`       |
 | Key status  | `inactive`, `active`, `expired`                  |
 | Topic       | `installation`, `activation`, `billing`, `bug`, `other` |
+| Solution    | slug, e.g. `personal-price`                      |
 
 List responses:
 
@@ -162,6 +163,28 @@ Response `200`
 
 ---
 
+## Solutions
+
+### GET /solutions
+
+Auth: session
+
+Response `200`
+
+```json
+[
+  {
+    "id": "0b8d2f7c-5a57-4e3b-9d6e-2f3a1c9b7e10",
+    "slug": "personal-price",
+    "name": "Personal Price",
+    "platform": "bitrix",
+    "storeUrl": null
+  }
+]
+```
+
+---
+
 ## Invites
 
 ### POST /invites
@@ -171,8 +194,10 @@ Auth: admin session or service token
 Request
 
 ```json
-{ "email": "client@shop.com", "platforms": ["wordpress", "shopify"] }
+{ "email": "client@shop.com", "solutions": ["personal-price"] }
 ```
+
+One key is created per entry.
 
 Response `201`
 
@@ -180,10 +205,7 @@ Response `201`
 {
   "userId": "2f6c0c3e-8a51-4f7e-9a53-0c6c9e0e1d11",
   "created": true,
-  "keys": [
-    { "id": "63d186cc-b651-4c03-9160-52015fa21c7a", "platform": "wordpress" },
-    { "id": "19f7d251-6381-44d3-a94f-96a213d34bd7", "platform": "shopify" }
-  ]
+  "keys": [{ "id": "63d186cc-b651-4c03-9160-52015fa21c7a", "solution": "personal-price", "platform": "bitrix" }]
 }
 ```
 
@@ -192,6 +214,7 @@ Errors
 | Status | Code               |
 | ------ | ------------------ |
 | 400    | `VALIDATION_ERROR` |
+| 400    | `UNKNOWN_SOLUTION` |
 | 401    | `UNAUTHORIZED`     |
 | 403    | `FORBIDDEN`        |
 | 409    | `USER_BLOCKED`     |
@@ -206,7 +229,8 @@ Key object:
 ```json
 {
   "id": "63d186cc-b651-4c03-9160-52015fa21c7a",
-  "platform": "wordpress",
+  "platform": "bitrix",
+  "solution": { "slug": "personal-price", "name": "Personal Price" },
   "key": "006E-253B-DB66-4070-0FZL-0G9Q",
   "status": "active",
   "activationsUsed": 1,
@@ -228,6 +252,7 @@ Query
 | `dateFrom` | `YYYY-MM-DD`           |
 | `dateTo`   | `YYYY-MM-DD`           |
 | `platform` | Platform               |
+| `solution` | Solution               |
 | `status`   | Key status             |
 | `page`     | number, default 1      |
 | `pageSize` | number, default 20, max 100 |
@@ -291,8 +316,10 @@ Auth: none
 Request
 
 ```json
-{ "key": "006E-253B-DB66-4070-0FZL-0G9Q", "domain": "https://www.shop.com" }
+{ "key": "006E-253B-DB66-4070-0FZL-0G9Q", "domain": "https://www.shop.com", "solution": "personal-price" }
 ```
+
+`solution` is optional. When sent, a key for another solution is refused.
 
 Response `200`
 
@@ -300,7 +327,8 @@ Response `200`
 {
   "valid": true,
   "status": "active",
-  "platform": "wordpress",
+  "platform": "bitrix",
+  "solution": "personal-price",
   "domain": "shop.com",
   "expiresAt": "2027-09-25T19:51:33.080Z",
   "activationsUsed": 1,
@@ -314,9 +342,10 @@ Errors
 | Status | Code             |
 | ------ | ---------------- |
 | 400    | `INVALID_DOMAIN` |
-| 403    | `USER_BLOCKED`   |
-| 404    | `KEY_NOT_FOUND`  |
-| 429    | `RATE_LIMITED`   |
+| 403    | `USER_BLOCKED`      |
+| 404    | `KEY_NOT_FOUND`     |
+| 409    | `SOLUTION_MISMATCH` |
+| 429    | `RATE_LIMITED`      |
 
 ### POST /keys/apply
 
@@ -325,7 +354,7 @@ Auth: none
 Request
 
 ```json
-{ "key": "006E-253B-DB66-4070-0FZL-0G9Q", "domain": "shop.com" }
+{ "key": "006E-253B-DB66-4070-0FZL-0G9Q", "domain": "shop.com", "solution": "personal-price" }
 ```
 
 Response `200` — same as `POST /keys/validate`
@@ -340,6 +369,7 @@ Errors
 | 409    | `KEY_INACTIVE`             |
 | 409    | `KEY_EXPIRED`              |
 | 409    | `ACTIVATION_LIMIT_REACHED` |
+| 409    | `SOLUTION_MISMATCH`        |
 | 429    | `RATE_LIMITED`             |
 
 ---
@@ -382,7 +412,7 @@ Auth for every endpoint: admin session
 
 ### GET /admin/keys
 
-Query: `dateFrom`, `dateTo`, `platform`, `status`, `email` (part of the customer email), `page`, `pageSize`
+Query: `dateFrom`, `dateTo`, `platform`, `solution`, `status`, `email` (part of the customer email), `page`, `pageSize`
 
 Response `200` — list of admin key objects
 
@@ -391,7 +421,8 @@ Response `200` — list of admin key objects
   "id": "63d186cc-b651-4c03-9160-52015fa21c7a",
   "userId": "2f6c0c3e-8a51-4f7e-9a53-0c6c9e0e1d11",
   "email": "client@shop.com",
-  "platform": "wordpress",
+  "platform": "bitrix",
+  "solution": { "slug": "personal-price", "name": "Personal Price" },
   "key": "006E…0G9Q",
   "status": "active",
   "activationsUsed": 1,
@@ -433,7 +464,7 @@ Response `200` — list of customers
   "email": "client@shop.com",
   "status": "active",
   "keysCount": 2,
-  "platforms": ["shopify", "wordpress"],
+  "platforms": ["bitrix"],
   "invitedAt": "2026-09-25T19:51:33.080Z",
   "lastLoginAt": "2026-09-25T20:10:02.511Z"
 }
@@ -471,6 +502,7 @@ Response `200`
   "totalCustomers": 14,
   "totalKeys": 25,
   "totalActivations": 41,
+  "keysBySolution": [{ "slug": "personal-price", "name": "Personal Price", "platform": "bitrix", "count": 25 }],
   "keysPerMonth": [
     { "month": "2026-08", "count": 11 },
     { "month": "2026-09", "count": 14 }

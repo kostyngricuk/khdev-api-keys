@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { dateTime, listQuerySchema } from "./common.js";
 import { keyStatusSchema, platformSchema } from "./enums.js";
+import { keySolution, solutionSlugSchema } from "./solutions.js";
 
 export const keyQuery = listQuerySchema.extend({
   platform: platformSchema.optional(),
+  solution: solutionSlugSchema.optional(),
   status: keyStatusSchema.optional(),
 });
 export type KeyQuery = z.infer<typeof keyQuery>;
@@ -11,6 +13,7 @@ export type KeyQuery = z.infer<typeof keyQuery>;
 export const customerKey = z.object({
   id: z.uuid(),
   platform: platformSchema,
+  solution: keySolution,
   key: z.string(),
   status: keyStatusSchema,
   activationsUsed: z.number().int(),
@@ -40,6 +43,8 @@ export type ActivationLimitBody = z.infer<typeof activationLimitBody>;
 export const validateBody = z.object({
   key: z.string().trim().min(1).max(64),
   domain: z.string().trim().min(1).max(2048),
+  /** Optional: the plugin's solution slug; a key for another solution is refused. */
+  solution: solutionSlugSchema.optional(),
 });
 export type ValidateBody = z.infer<typeof validateBody>;
 
@@ -47,6 +52,7 @@ export const validateResponse = z.object({
   valid: z.boolean(),
   status: keyStatusSchema,
   platform: platformSchema,
+  solution: z.string(),
   domain: z.string(),
   expiresAt: dateTime,
   activationsUsed: z.number().int(),

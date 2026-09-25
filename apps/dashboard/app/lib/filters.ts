@@ -4,6 +4,7 @@ export type Filters = {
   dateFrom?: string;
   dateTo?: string;
   platform?: Platform;
+  solution?: string;
   status?: string;
   email?: string;
   page: number;
@@ -15,6 +16,7 @@ type ParseOptions = {
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const clean = (value: string | null) => {
   const trimmed = value?.trim();
@@ -34,6 +36,9 @@ export function parseFilters(url: URL, options: ParseOptions = {}): Filters {
   const platform = clean(params.get("platform"));
   if (platform && (PLATFORMS as readonly string[]).includes(platform)) filters.platform = platform as Platform;
 
+  const solution = clean(params.get("solution"));
+  if (solution && SLUG_RE.test(solution)) filters.solution = solution;
+
   const status = clean(params.get("status"));
   if (status && (!options.statuses || options.statuses.includes(status))) filters.status = status;
 
@@ -48,7 +53,7 @@ export function parseFilters(url: URL, options: ParseOptions = {}): Filters {
 
 export function toApiQuery(filters: Filters): string {
   const params = new URLSearchParams();
-  for (const key of ["dateFrom", "dateTo", "platform", "status", "email"] as const) {
+  for (const key of ["dateFrom", "dateTo", "platform", "solution", "status", "email"] as const) {
     const value = filters[key];
     if (value) params.set(key, value);
   }

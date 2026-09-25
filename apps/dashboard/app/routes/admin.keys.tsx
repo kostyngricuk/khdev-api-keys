@@ -1,17 +1,12 @@
 import { Card, Flex, Table, Text } from "@radix-ui/themes";
-import { KEY_STATUSES, type AdminKey, type Paginated } from "@khdev/contracts";
-import { useFetcher } from "react-router";
+import { KEY_STATUSES, type AdminKey, type Paginated, type Solution } from "@khdev/contracts";
 import { EmptyState } from "~/components/EmptyState";
 import { Filters } from "~/components/Filters";
 import { KeyActions } from "~/components/KeyActions";
 import { PageHeader } from "~/components/PageHeader";
 import { Pagination } from "~/components/Pagination";
-import { PlatformBadge } from "~/components/PlatformBadge";
+import { SolutionLabel } from "~/components/SolutionLabel";
 import { KeyStatusBadge } from "~/components/StatusBadge";
-import { StatusMenu } from "~/components/StatusMenu";
-import { useActionToast } from "~/components/Toaster";
-import type { ActionResult } from "~/lib/actions.server";
-import { KEY_STATUS_COLORS } from "~/lib/colors";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { parseFilters, toApiQuery } from "~/lib/filters";
@@ -24,8 +19,11 @@ export const meta: Route.MetaFunction = () => [{ title: "All API Keys · KHDev K
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "admin");
   const filters = parseFilters(new URL(request.url), { statuses: KEY_STATUSES, allowEmail: true });
-  const keys = await api<Paginated<AdminKey>>(request, `/admin/keys?${toApiQuery(filters)}`);
-  return { keys, filters };
+  const [keys, solutions] = await Promise.all([
+    api<Paginated<AdminKey>>(request, `/admin/keys?${toApiQuery(filters)}`),
+    api<Solution[]>(request, "/solutions"),
+  ]);
+  return { keys, filters, solutions };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -33,32 +31,12 @@ export async function action({ request }: Route.ActionArgs) {
   return handleKeyAction(request, { allowLimit: true });
 }
 
-const SETTABLE_KEY_STATUSES = ["active", "inactive"] as const;
-
-/** Admins change a key's status from its badge; expired keys can only be extended (row menu). */
-function KeyStatusCell({ item }: { item: AdminKey }) {
-  const fetcher = useFetcher<ActionResult>();
-  useActionToast(fetcher.data);
-  const optimistic = (fetcher.formData?.get("status") as AdminKey["status"] | undefined) ?? item.status;
-  if (optimistic === "expired") return <KeyStatusBadge status="expired" />;
-  return (
-    <StatusMenu
-      label="Key status"
-      value={optimistic}
-      options={SETTABLE_KEY_STATUSES}
-      colors={KEY_STATUS_COLORS}
-      disabled={fetcher.state !== "idle"}
-      onSelect={(status) => fetcher.submit({ intent: "status", id: item.id, status }, { method: "post" })}
-    />
-  );
-}
-
 export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
-  const { keys, filters } = loaderData;
+  const { keys, filters, solutions } = loaderData;
   return (
     <>
       <PageHeader title="All API Keys" description="Every customer key. Keys are masked: only the first and last 4 characters are shown." />
-      <Filters filters={filters} statuses={KEY_STATUSES} showEmail />
+      <Filters filters={filters} statuses={KEY_STATUSES} solutions={solutions} showEmail />
       <Card>
         {keys.items.length === 0 ? (
           <EmptyState title="No keys found" hint="Change the filters to see more keys." />
@@ -68,7 +46,7 @@ export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
               <Table.Row>
                 <Table.ColumnHeaderCell>Key</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Customer</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Platform</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Solution</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Activations</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
@@ -88,10 +66,10 @@ export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
                     <Text size="2">{item.email}</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <PlatformBadge platform={item.platform} />
+                    <SolutionLabel solution={item.solution} platform={item.platform} />
                   </Table.Cell>
                   <Table.Cell>
-                    <KeyStatusCell item={item} />
+                    <KeyStatusBadge status={item.status} />
                   </Table.Cell>
                   <Table.Cell>
                     <Flex gap="1">

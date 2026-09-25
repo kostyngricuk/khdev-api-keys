@@ -88,6 +88,19 @@ Tables:
   re-invited as a new row (new id, status `inactive`) while the old row stays for history.
 - Activation count for a key = number of `key_activations` rows.
 
+### Solutions (added after the initial spec)
+
+- `solutions` table: `id`, `slug` unique, `name`, `platform`, `store_url` null. Seeded by the initial migration
+  with **Personal Price** (`personal-price`, `bitrix`). More solutions are added as rows.
+- Every key has `solution_id`; the key's `platform` is copied from its solution at creation.
+- Invites take `solutions: slug[]` (one key per entry); unknown slugs return `400 UNKNOWN_SOLUTION`.
+- Validate/apply accept an optional `solution`; a key for another solution returns `409 SOLUTION_MISMATCH`.
+- `GET /api/solutions` (session) lists solutions. Key tables show a Solution column (name + platform logo)
+  instead of Platform; key filters add Solution; the "Get a new key" dialog lists solutions with store links;
+  stats add keys by solution.
+- Keys are shown masked to customers too; the copy button copies the full key. Status changes are made from
+  the row menu (⋯) on key and customer tables.
+
 ## 5. Business Rules
 
 ### 5.1 Users

@@ -2,7 +2,7 @@ import { ArrowLeftIcon, EnvelopeClosedIcon, ExclamationTriangleIcon, InfoCircled
 import { Box, Button, Callout, Card, Flex, Heading, Link as ThemeLink, Text, TextField } from "@radix-ui/themes";
 import type { AuthUser, VerifyCodeResponse } from "@khdev/contracts";
 import { unstable_OneTimePasswordField as OneTimePasswordField } from "radix-ui";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { data, Form, Link, redirect, useNavigation } from "react-router";
 import { api, ApiError } from "~/lib/api.server";
 import { getUser, homePath } from "~/lib/auth.server";
@@ -150,6 +150,11 @@ function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
 
 function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
   const resendIn = useCountdown(state.sentAt);
+  const firstDigit = useRef<HTMLInputElement>(null);
+  // `autoFocus` only works on page load; the code step appears after a client-side submit.
+  useEffect(() => {
+    firstDigit.current?.focus();
+  }, [state.sentAt, state.error]);
   return (
     <Flex direction="column" gap="4">
       <Messages state={state} />
@@ -173,7 +178,12 @@ function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
               validationType="numeric"
             >
               {Array.from({ length: 6 }, (_, i) => (
-                <OneTimePasswordField.Input key={i} className="otp-input" aria-label={`Digit ${i + 1}`} />
+                <OneTimePasswordField.Input
+                  key={i}
+                  ref={i === 0 ? firstDigit : undefined}
+                  className="otp-input"
+                  aria-label={`Digit ${i + 1}`}
+                />
               ))}
               <OneTimePasswordField.HiddenInput />
             </OneTimePasswordField.Root>

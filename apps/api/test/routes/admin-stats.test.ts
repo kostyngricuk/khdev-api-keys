@@ -39,6 +39,10 @@ describe("GET /api/admin/stats", () => {
       totalCustomers: 2,
       totalKeys: 3,
       totalActivations: 2,
+      keysBySolution: [
+        { slug: "test-shopify", name: "Test shopify", platform: "shopify", count: 1 },
+        { slug: "test-wordpress", name: "Test wordpress", platform: "wordpress", count: 2 },
+      ],
       keysPerMonth: [
         { month: "2026-08", count: 1 },
         { month: "2026-09", count: 2 },

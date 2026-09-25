@@ -6,3 +6,4 @@ export * from "./admin.js";
 export * from "./invites.js";
 export * from "./support.js";
 export * from "./system.js";
+export * from "./solutions.js";

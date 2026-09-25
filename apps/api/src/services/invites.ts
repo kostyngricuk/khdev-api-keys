@@ -5,9 +5,11 @@ import { conflict } from "../lib/errors.js";
 import { sendAfterCommit } from "../mail/deliver.js";
 import { inviteEmail, newKeysEmail } from "../mail/templates.js";
 import { createKeysForUser } from "./keys.js";
+import { resolveSolutions } from "./solutions.js";
 import { findUserByEmail } from "./users.js";
 
 export async function inviteCustomer(ctx: AppContext, input: InviteBody): Promise<InviteResponse> {
+  const purchased = await resolveSolutions(ctx.db, input.solutions);
   const result = await ctx.db.transaction(async (tx) => {
     const existing = await findUserByEmail(tx, input.email);
     if (existing?.role === "admin") throw conflict("USER_IS_ADMIN", "This email belongs to an admin");
@@ -20,7 +22,7 @@ export async function inviteCustomer(ctx: AppContext, input: InviteBody): Promis
     // An active customer already went through first-login activation, so new keys start active.
     const keys = await createKeysForUser(ctx, tx, {
       userId: user.id,
-      platforms: input.platforms,
+      solutions: purchased,
       status: user.status === "active" ? "active" : "inactive",
     });
     return { user, created: !existing, keys };
@@ -33,8 +35,8 @@ export async function inviteCustomer(ctx: AppContext, input: InviteBody): Promis
   };
   const message =
     result.user.status === "inactive"
-      ? inviteEmail(result.user.email, input.platforms, links)
-      : newKeysEmail(result.user.email, input.platforms, links);
+      ? inviteEmail(result.user.email, purchased, links)
+      : newKeysEmail(result.user.email, purchased, links);
   await sendAfterCommit(ctx, message);
 
   return { userId: result.user.id, created: result.created, keys: result.keys };

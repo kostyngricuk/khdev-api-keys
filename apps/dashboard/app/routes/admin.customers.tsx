@@ -1,6 +1,7 @@
-import { AlertDialog, Button, Card, Flex, Table, Text } from "@radix-ui/themes";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { AlertDialog, Button, Card, DropdownMenu, Flex, IconButton, Table, Text } from "@radix-ui/themes";
 import { USER_STATUSES, type AdminCustomer, type Paginated, type UserStatus } from "@khdev/contracts";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useFetcher } from "react-router";
 import { EmptyState } from "~/components/EmptyState";
 import { Filters } from "~/components/Filters";
@@ -8,12 +9,10 @@ import { PageHeader } from "~/components/PageHeader";
 import { Pagination } from "~/components/Pagination";
 import { PlatformBadge } from "~/components/PlatformBadge";
 import { UserStatusBadge } from "~/components/StatusBadge";
-import { StatusMenu } from "~/components/StatusMenu";
 import { useActionToast } from "~/components/Toaster";
 import { runAction, type ActionResult } from "~/lib/actions.server";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
-import { USER_STATUS_COLORS } from "~/lib/colors";
 import { parseFilters, toApiQuery } from "~/lib/filters";
 import { formatDate } from "~/lib/format";
 import type { Route } from "./+types/admin.customers";
@@ -38,32 +37,64 @@ export async function action({ request }: Route.ActionArgs) {
   );
 }
 
+type MenuItem = { status: UserStatus; label: string; color?: "amber" | "red" };
+
+/** Status changes offered per current status; removed customers are final (invite the email again). */
+const ACTIONS: Record<Exclude<UserStatus, "removed">, MenuItem[]> = {
+  inactive: [
+    { status: "active", label: "Activate" },
+    { status: "blocked", label: "Block", color: "amber" },
+    { status: "removed", label: "Remove", color: "red" },
+  ],
+  active: [
+    { status: "inactive", label: "Deactivate" },
+    { status: "blocked", label: "Block", color: "amber" },
+    { status: "removed", label: "Remove", color: "red" },
+  ],
+  blocked: [
+    { status: "active", label: "Unblock" },
+    { status: "removed", label: "Remove", color: "red" },
+  ],
+};
+
 const CONFIRM: Partial<Record<UserStatus, string>> = {
   blocked: "The customer is signed out and cannot sign in. Their keys stop working in plugins.",
   removed:
     "The customer is signed out and will see “User not found” when signing in. Their keys stop working. This cannot be undone, but the email can be invited again.",
 };
 
-function StatusSelect({ customer }: { customer: AdminCustomer }) {
+function CustomerActions({ customer }: { customer: AdminCustomer }) {
   const fetcher = useFetcher<ActionResult>();
   const [pending, setPending] = useState<UserStatus | null>(null);
   useActionToast(fetcher.data);
-  const optimistic = (fetcher.formData?.get("status") as UserStatus | undefined) ?? customer.status;
 
-  if (customer.status === "removed") return <UserStatusBadge status="removed" />;
-
+  if (customer.status === "removed") return null;
   const submit = (status: UserStatus) => fetcher.submit({ id: customer.id, status }, { method: "post" });
+  const items = ACTIONS[customer.status];
+  const firstDanger = items.findIndex((item) => item.color);
 
   return (
     <>
-      <StatusMenu
-        label="Customer status"
-        value={optimistic}
-        options={USER_STATUSES}
-        colors={USER_STATUS_COLORS}
-        disabled={fetcher.state !== "idle"}
-        onSelect={(status) => (CONFIRM[status] ? setPending(status) : submit(status))}
-      />
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <IconButton variant="ghost" color="gray" aria-label={`Actions for ${customer.email}`} loading={fetcher.state !== "idle"}>
+            <DotsHorizontalIcon />
+          </IconButton>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          {items.map((item, index) => (
+            <Fragment key={item.status}>
+              {index === firstDanger && index > 0 && <DropdownMenu.Separator />}
+              <DropdownMenu.Item
+                color={item.color}
+                onSelect={() => (CONFIRM[item.status] ? setPending(item.status) : submit(item.status))}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            </Fragment>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
       <AlertDialog.Root open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
         <AlertDialog.Content maxWidth="460px">
           <AlertDialog.Title>
@@ -92,7 +123,7 @@ export default function CustomersPage({ loaderData }: Route.ComponentProps) {
   const { customers, filters } = loaderData;
   return (
     <>
-      <PageHeader title="Customers" description="Invited customers and their status. Change the status to block or remove a customer." />
+      <PageHeader title="Customers" description="Invited customers and their status. Use the row menu to block or remove a customer." />
       <Filters filters={filters} statuses={USER_STATUSES} showEmail />
       <Card>
         {customers.items.length === 0 ? (
@@ -107,6 +138,7 @@ export default function CustomersPage({ loaderData }: Route.ComponentProps) {
                 <Table.ColumnHeaderCell>Platforms</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Invited</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Last sign-in</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell />
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -118,7 +150,7 @@ export default function CustomersPage({ loaderData }: Route.ComponentProps) {
                     </Text>
                   </Table.RowHeaderCell>
                   <Table.Cell>
-                    <StatusSelect customer={customer} />
+                    <UserStatusBadge status={customer.status} />
                   </Table.Cell>
                   <Table.Cell>{customer.keysCount}</Table.Cell>
                   <Table.Cell>
@@ -132,6 +164,9 @@ export default function CustomersPage({ loaderData }: Route.ComponentProps) {
                   </Table.Cell>
                   <Table.Cell>{formatDate(customer.invitedAt)}</Table.Cell>
                   <Table.Cell>{formatDate(customer.lastLoginAt)}</Table.Cell>
+                  <Table.Cell justify="end">
+                    <CustomerActions customer={customer} />
+                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
