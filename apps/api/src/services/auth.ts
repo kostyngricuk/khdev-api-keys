@@ -1,10 +1,10 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import type { VerifyCodeResponse } from "@khdev/contracts";
 import { DEV_ADMIN_CODE, DEV_LOGIN_EMAILS } from "../config.js";
 import type { AppContext } from "../context.js";
 import { apiKeys, loginCodes, users } from "../db/schema.js";
 import { generateCode, hashSecret, safeEqual } from "../lib/crypto.js";
-import { forbidden, notFound, tooMany, unauthorized } from "../lib/errors.js";
+import { AppError, forbidden, notFound, tooMany, unauthorized } from "../lib/errors.js";
 import { loginCodeEmail } from "../mail/templates.js";
 import { createSession } from "./sessions.js";
 import { findUserByEmail } from "./users.js";
@@ -37,20 +37,31 @@ export async function requestLoginCode(ctx: AppContext, email: string) {
   }
 
   const code = generateCode();
-  await ctx.db.transaction(async (tx) => {
+  const codeId = await ctx.db.transaction(async (tx) => {
     await tx
       .update(loginCodes)
       .set({ consumedAt: now })
       .where(and(eq(loginCodes.userId, user.id), isNull(loginCodes.consumedAt)));
-    await tx.insert(loginCodes).values({
-      userId: user.id,
-      codeHash: hashSecret(code, ctx.config.authCodePepper),
-      expiresAt: new Date(now.getTime() + CODE_TTL_MS),
-      createdAt: now,
-    });
+    const [inserted] = await tx
+      .insert(loginCodes)
+      .values({
+        userId: user.id,
+        codeHash: hashSecret(code, ctx.config.authCodePepper),
+        expiresAt: new Date(now.getTime() + CODE_TTL_MS),
+        createdAt: now,
+      })
+      .returning({ id: loginCodes.id });
+    return inserted!.id;
   });
 
-  await ctx.mailer.send(loginCodeEmail(user.email, code));
+  try {
+    await ctx.mailer.send(loginCodeEmail(user.email, code));
+  } catch (error) {
+    // The user never got this code: drop it so they can request a new one immediately.
+    await ctx.db.delete(loginCodes).where(eq(loginCodes.id, codeId));
+    ctx.log.error({ err: error, to: user.email }, "Sign-in code email failed");
+    throw new AppError(502, "MAIL_FAILED", "We could not send the code. Please try again.");
+  }
   return { ok: true as const, resendAfterSeconds: RESEND_AFTER_SECONDS };
 }
 
@@ -73,10 +84,16 @@ async function checkCode(ctx: AppContext, userId: string, code: string) {
   }
   if (current.expiresAt <= now) throw unauthorized("CODE_EXPIRED", "The code has expired. Request a new one.");
 
+  // Reserve an attempt atomically before comparing, so parallel guesses cannot share one attempt.
+  const [reserved] = await ctx.db
+    .update(loginCodes)
+    .set({ attempts: sql`${loginCodes.attempts} + 1` })
+    .where(and(eq(loginCodes.id, current.id), lt(loginCodes.attempts, MAX_CODE_ATTEMPTS)))
+    .returning({ attempts: loginCodes.attempts });
+  if (!reserved) throw tooMany("CODE_ATTEMPTS_EXCEEDED", "Too many wrong attempts. Request a new code.");
+
   if (!safeEqual(current.codeHash, hashSecret(code, ctx.config.authCodePepper))) {
-    const attempts = current.attempts + 1;
-    await ctx.db.update(loginCodes).set({ attempts }).where(eq(loginCodes.id, current.id));
-    if (attempts >= MAX_CODE_ATTEMPTS) {
+    if (reserved.attempts >= MAX_CODE_ATTEMPTS) {
       throw tooMany("CODE_ATTEMPTS_EXCEEDED", "Too many wrong attempts. Request a new code.");
     }
     throw unauthorized("CODE_INVALID", "The code is incorrect");

@@ -24,3 +24,19 @@ describe("auth rate limiting", () => {
     expect((await verify("b@example.com")).statusCode).toBe(401);
   });
 });
+
+describe("client IP spoofing", () => {
+  it("ignores X-Forwarded-For unless TRUST_PROXY is configured", async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      const res = await t.app.inject({
+        method: "POST",
+        url: "/api/auth/verify-code",
+        payload: { email: "b@example.com", code: "000000" },
+        headers: { "x-forwarded-for": `203.0.113.${i}` },
+      });
+      statuses.push(res.statusCode);
+    }
+    expect(statuses).toContain(429);
+  });
+});

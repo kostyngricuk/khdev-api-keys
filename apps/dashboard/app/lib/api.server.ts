@@ -30,8 +30,6 @@ export async function api<T>(request: Request, path: string, options: ApiOptions
   const headers = new Headers({ accept: "application/json" });
   if (token) headers.set("authorization", `Bearer ${token}`);
   if (options.json !== undefined) headers.set("content-type", "application/json");
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) headers.set("x-forwarded-for", forwardedFor);
 
   let response: Response;
   try {

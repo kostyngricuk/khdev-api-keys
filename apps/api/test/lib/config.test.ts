@@ -47,3 +47,16 @@ describe("loadConfig mail and rate limit options", () => {
     expect(loadConfig({ ...base, MAIL_TRANSPORT: "log" }).mailTransport).toBe("log");
   });
 });
+
+describe("loadConfig without NODE_ENV", () => {
+  it("treats a missing NODE_ENV as production, so secrets are required and dev defaults never apply", () => {
+    expect(() => loadConfig({ DATABASE_URL: base.DATABASE_URL })).toThrow(/SERVICE_TOKEN/);
+    const config = loadConfig({
+      DATABASE_URL: base.DATABASE_URL,
+      AUTH_CODE_PEPPER: "prod-pepper-1234567890",
+      SERVICE_TOKEN: "prod-service-token-123",
+    });
+    expect(config.isProd).toBe(true);
+    expect(config.isDev).toBe(false);
+  });
+});

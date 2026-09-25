@@ -40,7 +40,15 @@ export async function createTestApp(options: TestAppOptions = {}) {
     UPLOAD_DIR: uploadDir,
     ...options.env,
   });
-  const mailer = createMemoryMailer();
+  const memory = createMemoryMailer();
+  // Tests can flip `mailer.failing` to simulate an SMTP outage.
+  const mailer = Object.assign(memory, {
+    failing: false,
+    async send(message: Parameters<typeof memory.send>[0]) {
+      if (mailer.failing) throw new Error("SMTP unavailable");
+      memory.sent.push(message);
+    },
+  });
 
   let current: Date | null = null;
   const clock = {
@@ -119,6 +127,7 @@ export async function createTestApp(options: TestAppOptions = {}) {
       sql`TRUNCATE ticket_attachments, support_tickets, sessions, login_codes, key_activations, api_keys, users RESTART IDENTITY CASCADE`,
     );
     mailer.clear();
+    mailer.failing = false;
     clock.reset();
   }
 

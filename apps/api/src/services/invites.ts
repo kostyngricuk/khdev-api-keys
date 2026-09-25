@@ -2,6 +2,7 @@ import type { InviteBody, InviteResponse } from "@khdev/contracts";
 import type { AppContext } from "../context.js";
 import { users } from "../db/schema.js";
 import { conflict } from "../lib/errors.js";
+import { sendAfterCommit } from "../mail/deliver.js";
 import { inviteEmail, newKeysEmail } from "../mail/templates.js";
 import { createKeysForUser } from "./keys.js";
 import { findUserByEmail } from "./users.js";
@@ -34,7 +35,7 @@ export async function inviteCustomer(ctx: AppContext, input: InviteBody): Promis
     result.user.status === "inactive"
       ? inviteEmail(result.user.email, input.platforms, links)
       : newKeysEmail(result.user.email, input.platforms, links);
-  await ctx.mailer.send(message);
+  await sendAfterCommit(ctx, message);
 
   return { userId: result.user.id, created: result.created, keys: result.keys };
 }

@@ -1,27 +1,25 @@
-import { Flex, Text } from "@radix-ui/themes";
+import { Text } from "@radix-ui/themes";
 import type { Platform } from "@khdev/contracts";
 import { PLATFORM_COLORS } from "~/lib/colors";
 import { platformLabel } from "~/lib/format";
 
+/** Platform label tinted with the brand color (background + border). */
 export function PlatformBadge({ platform }: { platform: Platform }) {
   const color = PLATFORM_COLORS[platform];
   return (
-    <Flex
-      display="inline-flex"
-      align="center"
-      gap="2"
-      px="2"
-      py="1"
+    <Text
+      size="1"
+      weight="medium"
       style={{
+        display: "inline-block",
+        padding: "2px 8px",
         borderRadius: 999,
-        background: `color-mix(in srgb, ${color} 12%, transparent)`,
-        border: `1px solid color-mix(in srgb, ${color} 35%, transparent)`,
+        whiteSpace: "nowrap",
+        background: `color-mix(in srgb, ${color} 14%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${color} 45%, transparent)`,
       }}
     >
-      <span style={{ width: 8, height: 8, borderRadius: 999, background: color, flexShrink: 0 }} />
-      <Text size="1" weight="medium" style={{ whiteSpace: "nowrap" }}>
-        {platformLabel(platform)}
-      </Text>
-    </Flex>
+      {platformLabel(platform)}
+    </Text>
   );
 }

@@ -26,17 +26,18 @@ declare module "fastify" {
   }
 }
 
-export type AppDeps = Omit<AppContext, "now"> & { now?: () => Date };
+export type AppDeps = Omit<AppContext, "now" | "log"> & { now?: () => Date };
 
 export async function buildApp(deps: AppDeps) {
-  const ctx: AppContext = { ...deps, now: deps.now ?? (() => new Date()) };
-  const { config } = ctx;
+  const { config } = deps;
 
   const app = Fastify({
     logger: { level: config.logLevel },
-    trustProxy: true,
+    // Only trust X-Forwarded-For from the configured number of proxy hops; clients can forge it otherwise.
+    trustProxy: config.trustProxy > 0 ? (_address: string, hop: number) => hop < config.trustProxy : false,
   }).withTypeProvider<ZodTypeProvider>();
 
+  const ctx: AppContext = { ...deps, now: deps.now ?? (() => new Date()), log: app.log };
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.decorate("ctx", ctx);

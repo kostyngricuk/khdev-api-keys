@@ -1,5 +1,6 @@
 import { Card, Flex, Table, Text } from "@radix-ui/themes";
 import { KEY_STATUSES, type AdminKey, type Paginated } from "@khdev/contracts";
+import { useFetcher } from "react-router";
 import { EmptyState } from "~/components/EmptyState";
 import { Filters } from "~/components/Filters";
 import { KeyActions } from "~/components/KeyActions";
@@ -7,6 +8,10 @@ import { PageHeader } from "~/components/PageHeader";
 import { Pagination } from "~/components/Pagination";
 import { PlatformBadge } from "~/components/PlatformBadge";
 import { KeyStatusBadge } from "~/components/StatusBadge";
+import { StatusMenu } from "~/components/StatusMenu";
+import { useActionToast } from "~/components/Toaster";
+import type { ActionResult } from "~/lib/actions.server";
+import { KEY_STATUS_COLORS } from "~/lib/colors";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { parseFilters, toApiQuery } from "~/lib/filters";
@@ -26,6 +31,26 @@ export async function loader({ request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ActionArgs) {
   await requireRole(request, "admin");
   return handleKeyAction(request, { allowLimit: true });
+}
+
+const SETTABLE_KEY_STATUSES = ["active", "inactive"] as const;
+
+/** Admins change a key's status from its badge; expired keys can only be extended (row menu). */
+function KeyStatusCell({ item }: { item: AdminKey }) {
+  const fetcher = useFetcher<ActionResult>();
+  useActionToast(fetcher.data);
+  const optimistic = (fetcher.formData?.get("status") as AdminKey["status"] | undefined) ?? item.status;
+  if (optimistic === "expired") return <KeyStatusBadge status="expired" />;
+  return (
+    <StatusMenu
+      label="Key status"
+      value={optimistic}
+      options={SETTABLE_KEY_STATUSES}
+      colors={KEY_STATUS_COLORS}
+      disabled={fetcher.state !== "idle"}
+      onSelect={(status) => fetcher.submit({ intent: "status", id: item.id, status }, { method: "post" })}
+    />
+  );
 }
 
 export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
@@ -66,7 +91,7 @@ export default function AdminKeysPage({ loaderData }: Route.ComponentProps) {
                     <PlatformBadge platform={item.platform} />
                   </Table.Cell>
                   <Table.Cell>
-                    <KeyStatusBadge status={item.status} />
+                    <KeyStatusCell item={item} />
                   </Table.Cell>
                   <Table.Cell>
                     <Flex gap="1">

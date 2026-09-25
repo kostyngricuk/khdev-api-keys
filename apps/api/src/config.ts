@@ -12,7 +12,8 @@ const bool = z
   .transform((value) => value === "true" || value === "1");
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  // A missing NODE_ENV is production: dev defaults (fixed login code, built-in tokens) must be opted into.
+  NODE_ENV: z.enum(["development", "test", "production"]).default("production"),
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().default(3001),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: "DATABASE_URL must be a postgres:// URL" }),
@@ -33,6 +34,8 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default("./uploads"),
   DEV_ADMIN_ENABLED: bool,
   CORS_ORIGIN: z.string().optional(),
+  // Number of reverse proxies in front of the API (0 = trust none; X-Forwarded-For is ignored).
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   MAIL_TRANSPORT: z.enum(["smtp", "log"]).default("smtp"),
   RATE_LIMIT_ENABLED: z.enum(["true", "false", "1", "0"]).optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
@@ -85,6 +88,7 @@ export function loadConfig(env: Record<string, string | undefined>) {
     uploadDir: e.UPLOAD_DIR,
     devAdminEnabled: e.DEV_ADMIN_ENABLED,
     corsOrigin: e.CORS_ORIGIN,
+    trustProxy: e.TRUST_PROXY,
     version: { APP_VERSION: e.APP_VERSION, GIT_SHA: e.GIT_SHA, BUILT_AT: e.BUILT_AT },
   };
 }

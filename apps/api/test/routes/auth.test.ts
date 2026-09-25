@@ -159,6 +159,17 @@ describe("POST /api/auth/verify-code", () => {
     expect((await verifyCode("user@example.com", code)).statusCode).toBe(429);
   });
 
+  it("counts wrong attempts atomically when they arrive in parallel", async () => {
+    await t.createUser({ email: "user@example.com" });
+    await requestCode("user@example.com");
+    const code = lastCode();
+    const wrong = code === "000000" ? "111111" : "000000";
+    await Promise.all(Array.from({ length: 10 }, () => verifyCode("user@example.com", wrong)));
+    const res = await verifyCode("user@example.com", code);
+    expect(res.statusCode).toBe(429);
+    expect(res.json().error.code).toBe("CODE_ATTEMPTS_EXCEEDED");
+  });
+
   it("rejects an expired code", async () => {
     await t.createUser({ email: "user@example.com" });
     await requestCode("user@example.com");

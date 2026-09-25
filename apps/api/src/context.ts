@@ -7,4 +7,5 @@ export type AppContext = {
   db: Database;
   mailer: Mailer;
   now: () => Date;
+  log: { error: (obj: object, msg: string) => void };
 };

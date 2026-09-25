@@ -13,6 +13,7 @@ import {
 import type { AppContext } from "../context.js";
 import { supportTickets, ticketAttachments } from "../db/schema.js";
 import { AppError, badRequest, payloadTooLarge } from "../lib/errors.js";
+import { sendAfterCommit } from "../mail/deliver.js";
 import { supportTicketEmail } from "../mail/templates.js";
 
 type SavedFile = { fileName: string; mimeType: string; size: number; storagePath: string };
@@ -80,7 +81,8 @@ export async function createSupportTicket(ctx: AppContext, user: AuthUser, reque
     }
   });
 
-  await ctx.mailer.send(
+  await sendAfterCommit(
+    ctx,
     supportTicketEmail({
       to: ctx.config.supportEmail,
       from: user.email,

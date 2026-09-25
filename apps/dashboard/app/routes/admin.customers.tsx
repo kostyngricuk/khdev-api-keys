@@ -1,4 +1,4 @@
-import { AlertDialog, Button, Card, Flex, Select, Table, Text } from "@radix-ui/themes";
+import { AlertDialog, Button, Card, Flex, Table, Text } from "@radix-ui/themes";
 import { USER_STATUSES, type AdminCustomer, type Paginated, type UserStatus } from "@khdev/contracts";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -8,13 +8,14 @@ import { PageHeader } from "~/components/PageHeader";
 import { Pagination } from "~/components/Pagination";
 import { PlatformBadge } from "~/components/PlatformBadge";
 import { UserStatusBadge } from "~/components/StatusBadge";
+import { StatusMenu } from "~/components/StatusMenu";
 import { useActionToast } from "~/components/Toaster";
 import { runAction, type ActionResult } from "~/lib/actions.server";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
 import { USER_STATUS_COLORS } from "~/lib/colors";
 import { parseFilters, toApiQuery } from "~/lib/filters";
-import { formatDate, statusLabel } from "~/lib/format";
+import { formatDate } from "~/lib/format";
 import type { Route } from "./+types/admin.customers";
 
 export const meta: Route.MetaFunction = () => [{ title: "Customers · KHDev Keys" }];
@@ -55,24 +56,14 @@ function StatusSelect({ customer }: { customer: AdminCustomer }) {
 
   return (
     <>
-      <Select.Root
+      <StatusMenu
+        label="Customer status"
         value={optimistic}
-        onValueChange={(value) => {
-          const status = value as UserStatus;
-          if (CONFIRM[status]) setPending(status);
-          else submit(status);
-        }}
+        options={USER_STATUSES}
+        colors={USER_STATUS_COLORS}
         disabled={fetcher.state !== "idle"}
-      >
-        <Select.Trigger variant="soft" color={USER_STATUS_COLORS[optimistic]} radius="full" />
-        <Select.Content>
-          {USER_STATUSES.map((status) => (
-            <Select.Item key={status} value={status}>
-              {statusLabel(status)}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
+        onSelect={(status) => (CONFIRM[status] ? setPending(status) : submit(status))}
+      />
       <AlertDialog.Root open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
         <AlertDialog.Content maxWidth="460px">
           <AlertDialog.Title>
