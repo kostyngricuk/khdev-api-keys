@@ -3,7 +3,13 @@ import { loadConfig } from "./config.js";
 import { createDatabase } from "./db/client.js";
 import { createLogMailer, createSmtpMailer, type Mailer } from "./mail/mailer.js";
 
-const config = loadConfig(process.env);
+let config: ReturnType<typeof loadConfig>;
+try {
+  config = loadConfig(process.env);
+} catch (error) {
+  console.error(`\n${(error as Error).message}\nLocal setup: cp apps/api/.env.example apps/api/.env\n`);
+  process.exit(1);
+}
 const { db, close } = createDatabase(config.databaseUrl, config.databasePoolMax);
 let logMail: Mailer["send"] = async () => {};
 const mailer: Mailer =
