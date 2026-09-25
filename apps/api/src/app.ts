@@ -12,6 +12,7 @@ import { SUPPORT_MAX_FILE_BYTES, SUPPORT_MAX_FILES } from "@khdev/contracts";
 import type { AppContext } from "./context.js";
 import { AppError } from "./lib/errors.js";
 import { authPlugin } from "./plugins/auth.js";
+import { adminRoutes } from "./routes/admin.js";
 import { authRoutes } from "./routes/auth.js";
 import { inviteRoutes } from "./routes/invites.js";
 import { keyRoutes } from "./routes/keys.js";
@@ -81,6 +82,7 @@ export async function buildApp(deps: AppDeps) {
       await api.register(inviteRoutes);
       await api.register(keyRoutes);
       await api.register(pluginRoutes);
+      await api.register(adminRoutes);
     },
     { prefix: "/api" },
   );

@@ -38,7 +38,7 @@ export async function createKeysForUser(
 
 // ---- Reading keys -------------------------------------------------------
 
-const activationsUsed = sql<number>`(select count(*)::int from ${keyActivations} where ${keyActivations.keyId} = ${apiKeys.id})`;
+const activationsUsed = sql<number>`(select count(*)::int from "key_activations" ka where ka."key_id" = "api_keys"."id")`;
 
 const keyColumns = {
   id: apiKeys.id,
