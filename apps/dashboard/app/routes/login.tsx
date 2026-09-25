@@ -235,8 +235,9 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
         </Box>
       )}
       <Box style={{ width: "100%", maxWidth: 420 }}>
-        <Heading size="6" align="center" mb="5">
-          {t("login.titlePrefix")} <Wordmark size="lg" />
+        <Heading size="6" align="center" mb="5" aria-label={`${t("login.titlePrefix")} ${t("common.appName")}`}>
+          {t("login.titlePrefix")}
+          <Wordmark size="lg" style={{ marginLeft: "0.2em" }} />
         </Heading>
         <Card size="4">{state.step === "code" ? <CodeStep state={state} busy={busy} /> : <EmailStep state={state} busy={busy} />}</Card>
       </Box>
