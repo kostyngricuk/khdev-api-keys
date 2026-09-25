@@ -1,9 +1,10 @@
 import { ChevronDownIcon, PaperPlaneIcon, QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 import { Box, Button, Card, Dialog, Flex, Heading, Select, Text, TextArea } from "@radix-ui/themes";
-import { SUPPORT_MAX_FILE_BYTES, SUPPORT_MAX_FILES, SUPPORT_TOPICS } from "@khdev/contracts";
+import { SUPPORT_ALLOWED_MIME_TYPES, SUPPORT_MAX_FILE_BYTES, SUPPORT_MAX_FILES, SUPPORT_TOPICS } from "@khdev/contracts";
 import { Accordion } from "radix-ui";
 import { useState } from "react";
 import { useFetcher } from "react-router";
+import { AttachmentPicker } from "~/components/AttachmentPicker";
 import { PageHeader } from "~/components/PageHeader";
 import { useActionToast } from "~/components/Toaster";
 import { useI18n } from "~/i18n/context";
@@ -11,6 +12,7 @@ import { failAction, runAction } from "~/lib/actions.server";
 import type { ActionResult } from "~/lib/actions.server";
 import { api } from "~/lib/api.server";
 import { requireRole } from "~/lib/auth.server";
+import type { AttachmentLimits } from "~/lib/attachments";
 import { bodyLimitError, SUPPORT_BODY_LIMIT } from "~/lib/body-limit";
 import { pageTitle } from "~/lib/meta";
 import type { Route } from "./+types/support";
@@ -18,6 +20,12 @@ import type { Route } from "./+types/support";
 export const meta: Route.MetaFunction = ({ matches }) => pageTitle(matches, "support.title");
 
 const ACCEPT = ".png,.jpg,.jpeg,.pdf,.zip,.txt";
+const LIMITS: AttachmentLimits = {
+  maxFiles: SUPPORT_MAX_FILES,
+  maxBytes: SUPPORT_MAX_FILE_BYTES,
+  mimeTypes: SUPPORT_ALLOWED_MIME_TYPES,
+  extensions: ACCEPT.split(","),
+};
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireRole(request, "customer");
@@ -44,19 +52,30 @@ function AskQuestionDialog() {
   const { t } = useI18n();
   const fetcher = useFetcher<ActionResult>();
   const [open, setOpen] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-  useActionToast(fetcher.data, () => setOpen(false));
+  const [files, setFiles] = useState<File[]>([]);
+  useActionToast(fetcher.data, () => {
+    setOpen(false);
+    setFiles([]);
+  });
   const busy = fetcher.state !== "idle";
 
-  function checkFiles(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.currentTarget.files ?? []);
-    if (files.length > SUPPORT_MAX_FILES) setFileError(t("support.tooManyFiles", { max: SUPPORT_MAX_FILES }));
-    else if (files.some((f) => f.size > SUPPORT_MAX_FILE_BYTES)) setFileError(t("support.fileTooLarge"));
-    else setFileError(null);
+  // The picked files live in state (so they can be listed and removed), so they are added to the form data here.
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const body = new FormData(event.currentTarget);
+    body.delete("files");
+    for (const file of files) body.append("files", file, file.name);
+    fetcher.submit(body, { method: "post", encType: "multipart/form-data" });
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setFiles([]);
+      }}
+    >
       <Dialog.Trigger>
         <Button>
           <QuestionMarkCircledIcon /> {t("support.askQuestion")}
@@ -67,7 +86,7 @@ function AskQuestionDialog() {
         <Dialog.Description size="2" mb="4">
           {t("support.dialogDescription")}
         </Dialog.Description>
-        <fetcher.Form method="post" encType="multipart/form-data">
+        <fetcher.Form method="post" encType="multipart/form-data" onSubmit={submit}>
           <Flex direction="column" gap="4">
             <Flex direction="column" gap="1">
               <Text as="label" size="2" weight="medium">
@@ -97,22 +116,14 @@ function AskQuestionDialog() {
                 placeholder={t("support.descriptionPlaceholder")}
               />
             </label>
-            <label>
-              <Text as="div" size="2" weight="medium" mb="1">
-                {t("support.attachments")}
-              </Text>
-              <input type="file" name="files" multiple accept={ACCEPT} onChange={checkFiles} />
-              <Text as="div" size="1" color={fileError ? "red" : "gray"} mt="1">
-                {fileError ?? t("support.attachmentsHint", { max: SUPPORT_MAX_FILES })}
-              </Text>
-            </label>
+            <AttachmentPicker files={files} onChange={setFiles} limits={LIMITS} accept={ACCEPT} label={t("support.attachments")} />
             <Flex gap="3" justify="end">
               <Dialog.Close>
                 <Button variant="outline" color="gray" highContrast type="button">
                   {t("common.cancel")}
                 </Button>
               </Dialog.Close>
-              <Button type="submit" loading={busy} disabled={Boolean(fileError)}>
+              <Button type="submit" loading={busy}>
                 <PaperPlaneIcon /> {t("support.send")}
               </Button>
             </Flex>
