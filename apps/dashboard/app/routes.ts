@@ -8,6 +8,7 @@ export default [
     index("routes/home.tsx"),
     route("keys", "routes/keys.tsx"),
     route("support", "routes/support.tsx"),
+    route("admin/dashboard", "routes/admin.dashboard.tsx"),
     route("admin/keys", "routes/admin.keys.tsx"),
     route("admin/customers", "routes/admin.customers.tsx"),
     route("admin/stats", "routes/admin.stats.tsx"),

@@ -78,6 +78,19 @@ describe("GET /api/keys", () => {
     expect(page2.total).toBe(3);
   });
 
+  it("lists the newest keys first", async () => {
+    const { user, headers } = await t.createCustomer();
+    const older = await t.createKey({ userId: user.id, createdAt: new Date("2026-01-10T10:00:00Z") });
+    const newest = await t.createKey({ userId: user.id, createdAt: new Date("2026-09-20T10:00:00Z") });
+    const middle = await t.createKey({ userId: user.id, createdAt: new Date("2026-05-01T10:00:00Z") });
+    const ids = (await t.app.inject({ method: "GET", url: "/api/keys", headers })).json().items.map((k: { id: string }) => k.id);
+    expect(ids).toEqual([newest.id, middle.id, older.id]);
+
+    const { headers: admin } = await t.createAdmin();
+    const adminIds = (await t.app.inject({ method: "GET", url: "/api/admin/keys", headers: admin })).json().items.map((k: { id: string }) => k.id);
+    expect(adminIds).toEqual([newest.id, middle.id, older.id]);
+  });
+
   it("marks keys past their expiry date as expired", async () => {
     const { user, headers } = await t.createCustomer();
     await t.createKey({ userId: user.id, createdAt: new Date("2025-01-01"), expiresAt: new Date("2026-01-01") });

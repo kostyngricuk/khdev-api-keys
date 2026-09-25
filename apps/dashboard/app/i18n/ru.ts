@@ -25,6 +25,7 @@ export const ru: Dictionary = {
   nav: {
     apiKeys: "API-ключи",
     support: "Поддержка",
+    dashboard: "Дашборд",
     allApiKeys: "Все API-ключи",
     customers: "Клиенты",
     statistics: "Статистика",
@@ -192,6 +193,10 @@ export const ru: Dictionary = {
       answer: "Купите это решение. Ключ автоматически появится в вашем аккаунте после покупки.",
     },
   ],
+  dashboard: {
+    title: "Дашборд",
+    description: "Итоги и что произошло за последние 24 часа.",
+  },
   stats: {
     title: "Статистика",
     description: "Ключи и клиенты за выбранный период. Даты фильтруют по дате создания.",
@@ -201,6 +206,9 @@ export const ru: Dictionary = {
     expiredKeys: "Истёкшие ключи",
     activations: "Активации",
     activationsHint: "Домены, активированные за период",
+    newCustomers24h: "Новые клиенты за 24 ч",
+    newKeys24h: "Новые API-ключи за 24 ч",
+    last24hHint: "Созданы за последние 24 часа",
     keysByPlatform: "Ключи по платформам",
     keysBySolution: "Ключи по решениям",
     keysBySolutionHint: "Цвет столбца — цвет платформы решения",

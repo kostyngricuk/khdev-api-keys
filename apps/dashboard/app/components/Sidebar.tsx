@@ -1,5 +1,6 @@
 import {
   BarChartIcon,
+  DashboardIcon,
   Cross2Icon,
   ExternalLinkIcon,
   HamburgerMenuIcon,
@@ -24,6 +25,7 @@ const NAV: Record<UserRole, NavItem[]> = {
     { to: "/support", labelKey: "nav.support", icon: <QuestionMarkCircledIcon /> },
   ],
   admin: [
+    { to: "/admin/dashboard", labelKey: "nav.dashboard", icon: <DashboardIcon /> },
     { to: "/admin/stats", labelKey: "nav.statistics", icon: <BarChartIcon /> },
     { to: "/admin/keys", labelKey: "nav.allApiKeys", icon: <LockClosedIcon /> },
     { to: "/admin/customers", labelKey: "nav.customers", icon: <PersonIcon /> },

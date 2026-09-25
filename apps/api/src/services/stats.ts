@@ -34,10 +34,28 @@ export async function getStats(ctx: AppContext, query: StatsQuery): Promise<Stat
   );
   const keyWhere = and(...keyScope, ...inRange(apiKeys.createdAt));
   const activationWhere = and(...keyScope, ...inRange(keyActivations.activatedAt));
+  const since = new Date(ctx.now().getTime() - 24 * 60 * 60 * 1000);
+  const recentCustomerWhere = and(
+    eq(users.role, "customer"),
+    gte(users.createdAt, since),
+    keyScope.length
+      ? exists(ctx.db.select({ one: sql`1` }).from(apiKeys).where(and(eq(apiKeys.userId, users.id), ...keyScope)))
+      : undefined,
+  );
+  const recentKeyWhere = and(...keyScope, gte(apiKeys.createdAt, since));
   const month = sql<string>`to_char(date_trunc('month', ${apiKeys.createdAt} at time zone 'UTC'), 'YYYY-MM')`;
 
-  const [customersByStatus, keysByStatus, keysByPlatform, [activations], perMonth, bySolution, customersByPlatform] =
-    await Promise.all([
+  const [
+    customersByStatus,
+    keysByStatus,
+    keysByPlatform,
+    [activations],
+    perMonth,
+    bySolution,
+    customersByPlatform,
+    [recentCustomers],
+    [recentKeys],
+  ] = await Promise.all([
     ctx.db.select({ key: users.status, n: count() }).from(users).where(customerWhere).groupBy(users.status),
     ctx.db.select({ key: apiKeys.status, n: count() }).from(apiKeys).where(keyWhere).groupBy(apiKeys.status),
     ctx.db.select({ key: apiKeys.platform, n: count() }).from(apiKeys).where(keyWhere).groupBy(apiKeys.platform),
@@ -60,6 +78,8 @@ export async function getStats(ctx: AppContext, query: StatsQuery): Promise<Stat
       .innerJoin(apiKeys, eq(apiKeys.userId, users.id))
       .where(and(...customerBase, ...keyScope))
       .groupBy(apiKeys.platform),
+    ctx.db.select({ n: count() }).from(users).where(recentCustomerWhere),
+    ctx.db.select({ n: count() }).from(apiKeys).where(recentKeyWhere),
   ]);
 
   const byStatus = tally(KEY_STATUSES, keysByStatus);
@@ -72,6 +92,8 @@ export async function getStats(ctx: AppContext, query: StatsQuery): Promise<Stat
     totalCustomers: Object.values<number>(byCustomerStatus).reduce((a, b) => a + b, 0),
     totalKeys: Object.values<number>(byStatus).reduce((a, b) => a + b, 0),
     totalActivations: activations?.n ?? 0,
+    newCustomers24h: recentCustomers?.n ?? 0,
+    newKeys24h: recentKeys?.n ?? 0,
     keysBySolution: bySolution.map((row) => ({ slug: row.slug, name: row.name, platform: row.platform, count: row.n })),
     keysPerMonth: perMonth.map((row) => ({ month: row.month, count: row.n })),
   };

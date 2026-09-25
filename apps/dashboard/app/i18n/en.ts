@@ -23,6 +23,7 @@ export const en = {
   nav: {
     apiKeys: "API Keys",
     support: "Support",
+    dashboard: "Dashboard",
     allApiKeys: "All API Keys",
     customers: "Customers",
     statistics: "Statistics",
@@ -191,6 +192,10 @@ export const en = {
       answer: "Buy the solution. The key is added to your account automatically after the purchase.",
     },
   ],
+  dashboard: {
+    title: "Dashboard",
+    description: "Totals and what happened in the last 24 hours.",
+  },
   stats: {
     title: "Statistics",
     description: "Keys and customers for the selected period. Dates filter by creation date.",
@@ -200,6 +205,9 @@ export const en = {
     expiredKeys: "Expired keys",
     activations: "Activations",
     activationsHint: "Domains activated in the period",
+    newCustomers24h: "New customers (24h)",
+    newKeys24h: "New API keys (24h)",
+    last24hHint: "Created in the last 24 hours",
     keysByPlatform: "Keys by platform",
     keysBySolution: "Keys by solution",
     keysBySolutionHint: "Bars use the solution's platform color",

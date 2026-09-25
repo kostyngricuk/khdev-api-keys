@@ -55,6 +55,9 @@ export const statsResponse = z.object({
   totalCustomers: z.number().int(),
   totalKeys: z.number().int(),
   totalActivations: z.number().int(),
+  /** Created in the last 24 hours (ignores dateFrom/dateTo, respects platform/solution). */
+  newCustomers24h: z.number().int(),
+  newKeys24h: z.number().int(),
   keysBySolution: z.array(
     z.object({ slug: z.string(), name: z.string(), platform: platformSchema, count: z.number().int() }),
   ),

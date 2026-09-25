@@ -40,6 +40,8 @@ describe("GET /api/admin/stats", () => {
       totalCustomers: 2,
       totalKeys: 3,
       totalActivations: 2,
+      newCustomers24h: 0,
+      newKeys24h: 0,
       keysBySolution: [
         { slug: "test-shopify", name: "Test shopify", platform: "shopify", count: 1 },
         { slug: "test-wordpress", name: "Test wordpress", platform: "wordpress", count: 2 },
@@ -84,5 +86,22 @@ describe("GET /api/admin/stats", () => {
     const { headers } = await t.createAdmin();
     const res = await t.app.inject({ method: "GET", url: "/api/admin/stats?solution=Bad%20Slug!", headers });
     expect(res.statusCode).toBe(400);
+  });
+
+  it("counts customers and keys created in the last 24 hours, regardless of the date range", async () => {
+    const { headers } = await t.createAdmin();
+    const now = new Date("2026-09-25T12:00:00Z");
+    t.clock.set(now);
+    const fresh = await t.createUser({ email: "fresh@example.com", createdAt: new Date("2026-09-25T02:00:00Z") });
+    await t.createUser({ email: "old@example.com", createdAt: new Date("2026-09-23T12:00:00Z") });
+    await t.createKey({ userId: fresh.id, platform: "bitrix", createdAt: new Date("2026-09-24T13:00:00Z") });
+    await t.createKey({ userId: fresh.id, platform: "wordpress", createdAt: new Date("2026-09-24T11:00:00Z") });
+
+    const all = (await t.app.inject({ method: "GET", url: "/api/admin/stats?dateTo=2026-01-01", headers })).json();
+    expect(all.newCustomers24h).toBe(1);
+    expect(all.newKeys24h).toBe(1);
+
+    const bitrix = (await t.app.inject({ method: "GET", url: "/api/admin/stats?platform=wordpress", headers })).json();
+    expect(bitrix.newKeys24h).toBe(0);
   });
 });

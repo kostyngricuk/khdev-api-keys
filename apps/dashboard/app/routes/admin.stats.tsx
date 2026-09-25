@@ -1,4 +1,4 @@
-import { Box, Card, Flex, Grid, Heading, Separator, Text } from "@radix-ui/themes";
+import { Box, Flex, Grid, Heading, Separator, Text } from "@radix-ui/themes";
 import { KEY_STATUSES, USER_STATUSES, type Solution, type StatsResponse } from "@khdev/contracts";
 import { ChartCard, type ChartRow } from "~/components/ChartCard";
 import { CategoryBarChart, StatusBarChart, TrendLineChart } from "~/components/Charts";
@@ -26,24 +26,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { stats, filters, solutions };
 }
 
-function Kpi({ label, value, hint }: { label: string; value: number; hint?: string }) {
-  const { locale } = useI18n();
-  return (
-    <Card size="2">
-      <Text as="div" size="2" color="gray">
-        {label}
-      </Text>
-      <Text as="div" size="8" weight="bold" mt="1">
-        {value.toLocaleString(intlLocale(locale))}
-      </Text>
-      {hint && (
-        <Text as="div" size="1" color="gray" mt="1">
-          {hint}
-        </Text>
-      )}
-    </Card>
-  );
-}
 
 /** A titled group of charts ("Keys", "Customers"). */
 function StatsSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -104,26 +86,11 @@ export default function StatsPage({ loaderData }: Route.ComponentProps) {
     label: formatMonth(m.month, locale),
     value: m.count,
   }));
-  const activeCustomers = stats.customersByStatus.active;
 
   return (
     <>
       <PageHeader title={t("stats.title")} description={t("stats.description")} />
       <Filters filters={filters} statuses={[]} solutions={solutions} showStatus={false} />
-      <Grid columns={{ initial: "1", sm: "2", lg: "4" }} gap="4" mb="4">
-        <Kpi
-          label={t("stats.customers")}
-          value={stats.totalCustomers}
-          hint={t("stats.activeHint", { n: activeCustomers })}
-        />
-        <Kpi
-          label={t("stats.apiKeys")}
-          value={stats.totalKeys}
-          hint={t("stats.activeHint", { n: stats.keysByStatus.active })}
-        />
-        <Kpi label={t("stats.expiredKeys")} value={stats.keysByStatus.expired} />
-        <Kpi label={t("stats.activations")} value={stats.totalActivations} hint={t("stats.activationsHint")} />
-      </Grid>
       <StatsSection title={t("stats.sectionKeys")}>
         <Grid columns={{ initial: "1", lg: "2" }} gap="4">
           <ChartCard title={t("stats.keysByPlatform")} rows={platformRows} valueLabel={t("stats.valueKeys")}>

@@ -412,7 +412,9 @@ Auth for every endpoint: admin session
 
 ### GET /admin/keys
 
-Query: `dateFrom`, `dateTo`, `platform`, `solution`, `status`, `email` (part of the customer email), `page`, `pageSize`
+Query: `dateFrom`, `dateTo`, `platform`, `solution`
+
+`newCustomers24h` and `newKeys24h` count the last 24 hours and ignore `dateFrom`/`dateTo`., `status`, `email` (part of the customer email), `page`, `pageSize`
 
 Response `200` — list of admin key objects
 
@@ -492,6 +494,8 @@ Errors
 
 Query: `dateFrom`, `dateTo`, `platform`, `solution`
 
+`newCustomers24h` and `newKeys24h` count the last 24 hours and ignore `dateFrom`/`dateTo`.
+
 Response `200`
 
 ```json
@@ -503,6 +507,8 @@ Response `200`
   "totalCustomers": 14,
   "totalKeys": 25,
   "totalActivations": 41,
+  "newCustomers24h": 2,
+  "newKeys24h": 3,
   "keysBySolution": [{ "slug": "personal-price", "name": "Personal Price", "platform": "bitrix", "count": 25 }],
   "keysPerMonth": [
     { "month": "2026-08", "count": 11 },
