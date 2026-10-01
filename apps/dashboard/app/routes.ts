@@ -4,6 +4,8 @@ export default [
   route("login", "routes/login.tsx"),
   route("logout", "routes/logout.tsx"),
   route("locale", "routes/locale.tsx"),
+  // TEMP (Task 1): Astryx spike, deleted in Task 7.
+  route("spike", "routes/spike.tsx"),
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("keys", "routes/keys.tsx"),

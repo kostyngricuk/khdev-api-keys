@@ -14,6 +14,10 @@ minimumReleaseAgeExclude:
   - vitest@5.0.2
 
 allowBuilds:
+  # Nudge-only postinstall (prints a one-line setup hint, never fails the install — verified in the package source).
+  '@astryxdesign/cli': true
+  # Nudge-only postinstall (prints a one-line setup hint, always exits 0 — verified in the package source).
+  '@astryxdesign/core': true
   '@swc/core': true
   core-js: false
   esbuild: true

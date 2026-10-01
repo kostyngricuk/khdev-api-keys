@@ -1,12 +1,16 @@
 import "@radix-ui/themes/styles.css";
 import "./app.css";
+import "./theme/khdev.css";
 
+import { LinkProvider, Theme as AstryxTheme } from "@astryxdesign/core";
 import { Box, Button, Card, Code, Flex, Heading, Text, Theme } from "@radix-ui/themes";
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteLoaderData } from "react-router";
 import { DEFAULT_LOCALE, localeFromCookie } from "~/i18n";
 import { I18nProvider, useI18n } from "~/i18n/context";
 import { ValidationMessages } from "~/components/ValidationMessages";
 import { appTitle } from "~/lib/meta";
+import { RouterLink } from "~/lib/router-link";
+import { khdevTheme } from "./theme/khdev";
 import type { Route } from "./+types/root";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -21,7 +25,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Also rendered for errors, when the root loader data may be missing.
   const locale = useRouteLoaderData<typeof loader>("root")?.locale ?? DEFAULT_LOCALE;
   return (
-    <html lang={locale}>
+    <html lang={locale} data-theme="light">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -32,7 +36,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <I18nProvider locale={locale}>
           <ValidationMessages />
           <Theme accentColor="indigo" grayColor="slate" radius="medium" scaling="100%">
-            {children}
+            {/* Astryx coexists inside Radix until Task 7 removes Radix. mode="light" pins
+                color-scheme so light-dark() tokens never resolve to their dark branch. */}
+            <AstryxTheme theme={khdevTheme} mode="light">
+              <LinkProvider component={RouterLink}>{children}</LinkProvider>
+            </AstryxTheme>
           </Theme>
         </I18nProvider>
         <ScrollRestoration />
