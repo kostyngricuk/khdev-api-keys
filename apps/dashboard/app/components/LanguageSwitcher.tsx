@@ -1,4 +1,4 @@
-import { SegmentedControl } from "@radix-ui/themes";
+import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core";
 import { useLocation, useSubmit } from "react-router";
 import { ENABLED_LOCALES, LOCALE_LABELS, type Locale } from "~/i18n";
 import { useI18n } from "~/i18n/context";
@@ -13,11 +13,10 @@ export function LanguageSwitcher() {
   const location = useLocation();
   if (ENABLED_LOCALES.length < 2) return null;
   return (
-    <SegmentedControl.Root
-      size="1"
+    <SegmentedControl
+      label={t("common.language")}
       value={locale}
-      aria-label={t("common.language")}
-      onValueChange={(value) =>
+      onChange={(value) =>
         submit(
           { locale: value as Locale, redirectTo: `${location.pathname}${location.search}` },
           { method: "post", action: "/locale" },
@@ -25,10 +24,8 @@ export function LanguageSwitcher() {
       }
     >
       {ENABLED_LOCALES.map((code) => (
-        <SegmentedControl.Item key={code} value={code}>
-          {LOCALE_LABELS[code]}
-        </SegmentedControl.Item>
+        <SegmentedControlItem key={code} value={code} label={LOCALE_LABELS[code]} />
       ))}
-    </SegmentedControl.Root>
+    </SegmentedControl>
   );
 }

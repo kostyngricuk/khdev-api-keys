@@ -1,15 +1,15 @@
-import { ArrowLeftIcon, EnvelopeClosedIcon, ExclamationTriangleIcon, InfoCircledIcon } from "@radix-ui/react-icons";
-import { Box, Button, Callout, Card, Flex, Heading, Link as ThemeLink, Text, TextField } from "@radix-ui/themes";
+import { Mail } from "lucide-react";
+import { Banner, Button, Card, Center, Heading, Icon, Link, Text, TextInput } from "@astryxdesign/core";
 import type { AuthUser, VerifyCodeResponse } from "@khdev/contracts";
-import { unstable_OneTimePasswordField as OneTimePasswordField } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
-import { data, Form, Link, redirect, useNavigation } from "react-router";
-import { api, ApiError } from "~/lib/api.server";
-import { getUser, homePath } from "~/lib/auth.server";
+import { data, Form, redirect, useNavigation } from "react-router";
+import { OtpInput } from "~/components/OtpInput";
 import { LanguageSwitcher } from "~/components/LanguageSwitcher";
 import { Wordmark } from "~/components/Wordmark";
 import { ENABLED_LOCALES } from "~/i18n";
 import { useI18n } from "~/i18n/context";
+import { api, ApiError } from "~/lib/api.server";
+import { getUser, homePath } from "~/lib/auth.server";
 import { serverI18n } from "~/lib/i18n.server";
 import { pageTitle } from "~/lib/meta";
 import { createUserSession } from "~/lib/session.server";
@@ -99,59 +99,38 @@ function useCountdown(sentAt: number | undefined) {
 function Messages({ state }: { state: LoginState }) {
   return (
     <>
-      {state.error && (
-        <Callout.Root color="red" role="alert">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>{state.error}</Callout.Text>
-        </Callout.Root>
-      )}
-      {state.notice && !state.error && (
-        <Callout.Root color="blue">
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>{state.notice}</Callout.Text>
-        </Callout.Root>
-      )}
+      {state.error && <Banner status="error" title={state.error} />}
+      {state.notice && !state.error && <Banner status="info" title={state.notice} />}
     </>
   );
 }
 
 function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
   const { t } = useI18n();
+  const [email, setEmail] = useState(state.email);
   return (
     <Form method="post">
       <input type="hidden" name="intent" value="request-code" />
-      <Flex direction="column" gap="4">
+      <div style={{ display: "grid", gap: 16 }}>
         <Messages state={state} />
-        <label>
-          <Text as="div" size="2" weight="medium" mb="1">
-            {t("login.email")}
-          </Text>
-          <TextField.Root
-            name="email"
-            type="email"
-            size="3"
-            required
-            autoFocus
-            autoComplete="email"
-            placeholder={t("login.emailPlaceholder")}
-            defaultValue={state.email}
-          >
-            <TextField.Slot>
-              <EnvelopeClosedIcon />
-            </TextField.Slot>
-          </TextField.Root>
-        </label>
-        <Button size="3" type="submit" loading={busy}>
-          {t("login.continue")}
-        </Button>
-        <Text size="1" color="gray" align="center">
+        <TextInput
+          label={t("login.email")}
+          type="email"
+          size="lg"
+          htmlName="email"
+          isRequired
+          hasAutoFocus
+          autoComplete="email"
+          placeholder={t("login.emailPlaceholder")}
+          value={email}
+          onChange={(value) => setEmail(value)}
+          startIcon={<Icon icon={Mail} />}
+        />
+        <Button type="submit" variant="primary" size="lg" width="100%" label={t("login.continue")} isLoading={busy} />
+        <Text size="sm" color="secondary" justify="center">
           {t("login.inviteOnly")}
         </Text>
-      </Flex>
+      </div>
     </Form>
   );
 }
@@ -159,66 +138,43 @@ function EmailStep({ state, busy }: { state: LoginState; busy: boolean }) {
 function CodeStep({ state, busy }: { state: LoginState; busy: boolean }) {
   const { t } = useI18n();
   const resendIn = useCountdown(state.sentAt);
-  const firstDigit = useRef<HTMLInputElement>(null);
-  // `autoFocus` only works on page load; the code step appears after a client-side submit.
-  useEffect(() => {
-    firstDigit.current?.focus();
-  }, [state.sentAt, state.error]);
+  const formRef = useRef<HTMLFormElement>(null);
   return (
-    <Flex direction="column" gap="4">
+    <div style={{ display: "grid", gap: 16 }}>
       <Messages state={state} />
-      <Text size="2" color="gray">
+      <Text color="secondary">
         {t("login.codeSentBefore")} <Text weight="medium">{state.email}</Text>. {t("login.codeSentAfter")}
       </Text>
-      <Form method="post">
+      <Form ref={formRef} method="post">
         <input type="hidden" name="intent" value="verify-code" />
         <input type="hidden" name="email" value={state.email} />
-        <Flex direction="column" gap="4">
-          <label>
-            <Text as="div" size="2" weight="medium" mb="2">
-              {t("login.enterCode")}
-            </Text>
-            <OneTimePasswordField.Root
-              key={state.error ?? state.sentAt}
-              name="code"
-              className="otp-root"
-              autoSubmit
-              autoFocus
-              validationType="numeric"
-            >
-              {Array.from({ length: 6 }, (_, i) => (
-                <OneTimePasswordField.Input
-                  key={i}
-                  ref={i === 0 ? firstDigit : undefined}
-                  className="otp-input"
-                  aria-label={t("login.digit", { n: i + 1 })}
-                />
-              ))}
-              <OneTimePasswordField.HiddenInput />
-            </OneTimePasswordField.Root>
-          </label>
-          <Button size="3" type="submit" loading={busy}>
-            {t("login.signIn")}
-          </Button>
-        </Flex>
+        <div style={{ display: "grid", gap: 16 }}>
+          {/* Remounts per attempt so a failed code starts from empty boxes. */}
+          <OtpInput
+            key={state.error ?? state.sentAt}
+            name="code"
+            ariaLabels={[1, 2, 3, 4, 5, 6].map((n) => t("login.digit", { n }))}
+            onComplete={() => formRef.current?.requestSubmit()}
+          />
+          <Button type="submit" variant="primary" size="lg" width="100%" label={t("login.signIn")} isLoading={busy} />
+        </div>
       </Form>
-      <Flex justify="between" align="center">
-        <ThemeLink asChild size="2">
-          <Link to={`/login?email=${encodeURIComponent(state.email)}`}>
-            <Flex align="center" gap="1">
-              <ArrowLeftIcon /> {t("login.useAnotherEmail")}
-            </Flex>
-          </Link>
-        </ThemeLink>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Link href={`/login?email=${encodeURIComponent(state.email)}`} hasUnderline>
+          {t("login.useAnotherEmail")}
+        </Link>
         <Form method="post">
           <input type="hidden" name="intent" value="resend" />
           <input type="hidden" name="email" value={state.email} />
-          <Button type="submit" variant="ghost" size="2" disabled={resendIn > 0 || busy}>
-            {resendIn > 0 ? t("login.resendIn", { seconds: resendIn }) : t("login.resend")}
-          </Button>
+          <Button
+            type="submit"
+            variant="ghost"
+            label={resendIn > 0 ? t("login.resendIn", { seconds: resendIn }) : t("login.resend")}
+            isDisabled={resendIn > 0 || busy}
+          />
         </Form>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 }
 
@@ -229,19 +185,20 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
   const busy = navigation.state !== "idle";
 
   return (
-    <Flex align="center" justify="center" p="4" style={{ minHeight: "100vh", position: "relative" }}>
+    <Center axis="both" style={{ minHeight: "100vh", position: "relative" }}>
       {ENABLED_LOCALES.length > 1 && (
-        <Box style={{ position: "absolute", top: 16, left: 16 }}>
+        <div style={{ position: "absolute", top: 16, left: 16 }}>
           <LanguageSwitcher />
-        </Box>
+        </div>
       )}
-      <Box style={{ width: "100%", maxWidth: 420 }}>
-        <Heading size="6" align="center" mb="5" aria-label={`${t("login.titlePrefix")} ${t("common.appName")}`}>
-          {t("login.titlePrefix")}
-          <Wordmark size="lg" style={{ marginLeft: "0.2em" }} />
+      <div style={{ width: "100%", maxWidth: 420, padding: 16, display: "grid", gap: 24, justifyItems: "center" }}>
+        <Heading level={1} justify="center" aria-label={`${t("login.titlePrefix")} ${t("common.appName")}`}>
+          {t("login.titlePrefix")} <Wordmark size="lg" />
         </Heading>
-        <Card size="4">{state.step === "code" ? <CodeStep state={state} busy={busy} /> : <EmailStep state={state} busy={busy} />}</Card>
-      </Box>
-    </Flex>
+        <Card padding={6} width="100%">
+          {state.step === "code" ? <CodeStep state={state} busy={busy} /> : <EmailStep state={state} busy={busy} />}
+        </Card>
+      </div>
+    </Center>
   );
 }

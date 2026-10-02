@@ -29,25 +29,9 @@ body {
   font-weight: 500;
 }
 
-.otp-root {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.otp-input {
-  width: 44px;
-  height: 52px;
-  text-align: center;
-  font-size: var(--font-size-6);
-  font-family: inherit;
-  border: 1px solid var(--gray-a7);
-  border-radius: var(--radius-3);
-  background: var(--color-surface);
-  color: var(--gray-12);
-}
-
-.otp-input:focus {
-  outline: 2px solid var(--accent-8);
+/* Focus ring for the OTP boxes (OtpInput); base styling is inline in the component. */
+.code-box:focus {
+  outline: 2px solid var(--color-accent);
   outline-offset: -1px;
 }
 
