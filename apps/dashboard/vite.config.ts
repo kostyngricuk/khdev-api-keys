@@ -36,6 +36,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       tsconfigPaths: true,
       alias: {
+        // Locale catalogs live at the package root, outside src/; must precede the src alias below.
+        "@astryxdesign/core/locales": fileURLToPath(new URL("./node_modules/@astryxdesign/core/locales", import.meta.url)),
         // Consume Astryx from source so the StyleX transform sees its stylex.create calls.
         "@astryxdesign/core": fileURLToPath(new URL("./node_modules/@astryxdesign/core/src", import.meta.url)),
       },

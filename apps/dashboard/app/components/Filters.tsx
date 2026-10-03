@@ -1,9 +1,10 @@
-import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { Button, Card, Flex, Select, Text, TextField } from "@radix-ui/themes";
+import { Button, Card, DateInput, HStack, Icon, Selector, TextInput } from "@astryxdesign/core";
+import { Search } from "lucide-react";
 import { PLATFORMS, type Solution } from "@khdev/contracts";
-import { Form, Link, useLocation } from "react-router";
-import type { Filters as FilterValues } from "~/lib/filters";
+import { useState } from "react";
+import { Form, useLocation } from "react-router";
 import { useI18n } from "~/i18n/context";
+import type { Filters as FilterValues } from "~/lib/filters";
 import { platformLabel } from "~/lib/format";
 
 type Props = {
@@ -15,90 +16,90 @@ type Props = {
   showStatus?: boolean;
 };
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <Flex direction="column" gap="1">
-      <Text as="label" size="1" color="gray" weight="medium">
-        {label}
-      </Text>
-      {children}
-    </Flex>
-  );
-}
+/** DateInput's ISODateString (not re-exported by core); parseFilters already validates this shape. */
+type ISODate = `${number}${number}${number}${number}-${number}${number}-${number}${number}`;
 
 /** A GET form: filters are kept in the URL and read by the route loader. */
 export function Filters({ filters, statuses, solutions, showEmail = false, showStatus = true }: Props) {
   const { t, locale, solutionName } = useI18n();
   const location = useLocation();
+  // Astryx inputs are strictly controlled; seed local state from the URL. The form's
+  // key={location.search} remounts this tree on every navigation and re-seeds it.
+  const [dateFrom, setDateFrom] = useState(filters.dateFrom ?? "");
+  const [dateTo, setDateTo] = useState(filters.dateTo ?? "");
+  const [solution, setSolution] = useState(filters.solution ?? "all");
+  const [platform, setPlatform] = useState(filters.platform ?? "all");
+  const [status, setStatus] = useState(filters.status ?? "all");
+  const [email, setEmail] = useState(filters.email ?? "");
+
   return (
-    <Card mb="4">
+    <Card style={{ marginBottom: 16 }}>
       <Form method="get" key={location.search}>
-        <Flex gap="3" wrap="wrap" align="end">
-          <Field label={t("filters.dateFrom")}>
-            <TextField.Root type="date" name="dateFrom" defaultValue={filters.dateFrom ?? ""} />
-          </Field>
-          <Field label={t("filters.dateTo")}>
-            <TextField.Root type="date" name="dateTo" defaultValue={filters.dateTo ?? ""} />
-          </Field>
+        <HStack gap={3} wrap="wrap" vAlign="end">
+          {/* DateInput has no htmlName, so the native GET form reads hidden inputs. */}
+          <DateInput
+            label={t("filters.dateFrom")}
+            value={dateFrom ? (dateFrom as ISODate) : undefined}
+            onChange={(value) => setDateFrom(value ?? "")}
+            presentation="native"
+          />
+          <input type="hidden" name="dateFrom" value={dateFrom} />
+          <DateInput
+            label={t("filters.dateTo")}
+            value={dateTo ? (dateTo as ISODate) : undefined}
+            onChange={(value) => setDateTo(value ?? "")}
+            presentation="native"
+          />
+          <input type="hidden" name="dateTo" value={dateTo} />
           {solutions && (
-            <Field label={t("filters.solution")}>
-              <Select.Root name="solution" defaultValue={filters.solution ?? "all"}>
-                <Select.Trigger style={{ minWidth: 160 }} />
-                <Select.Content>
-                  <Select.Item value="all">{t("filters.allSolutions")}</Select.Item>
-                  {solutions.map((s) => (
-                    <Select.Item key={s.slug} value={s.slug}>
-                      {solutionName(s)}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Root>
-            </Field>
+            <Selector
+              label={t("filters.solution")}
+              options={[
+                { value: "all", label: t("filters.allSolutions") },
+                ...solutions.map((s) => ({ value: s.slug, label: solutionName(s) })),
+              ]}
+              value={solution}
+              onChange={setSolution}
+              htmlName="solution"
+            />
           )}
-          <Field label={t("filters.platform")}>
-            <Select.Root name="platform" defaultValue={filters.platform ?? "all"}>
-              <Select.Trigger style={{ minWidth: 150 }} />
-              <Select.Content>
-                <Select.Item value="all">{t("filters.allPlatforms")}</Select.Item>
-                {PLATFORMS.map((p) => (
-                  <Select.Item key={p} value={p}>
-                    {platformLabel(p, locale)}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Root>
-          </Field>
+          <Selector
+            label={t("filters.platform")}
+            options={[
+              { value: "all", label: t("filters.allPlatforms") },
+              ...PLATFORMS.map((p) => ({ value: p, label: platformLabel(p, locale) })),
+            ]}
+            value={platform}
+            onChange={setPlatform}
+            htmlName="platform"
+          />
           {showStatus && (
-            <Field label={t("filters.status")}>
-              <Select.Root name="status" defaultValue={filters.status ?? "all"}>
-                <Select.Trigger style={{ minWidth: 130 }} />
-                <Select.Content>
-                  <Select.Item value="all">{t("filters.allStatuses")}</Select.Item>
-                  {statuses.map((s) => (
-                    <Select.Item key={s} value={s}>
-                      {t(`status.${s}`)}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Root>
-            </Field>
+            <Selector
+              label={t("filters.status")}
+              options={[
+                { value: "all", label: t("filters.allStatuses") },
+                ...statuses.map((s) => ({ value: s, label: t(`status.${s}`) })),
+              ]}
+              value={status}
+              onChange={setStatus}
+              htmlName="status"
+            />
           )}
           {showEmail && (
-            <Field label={t("filters.email")}>
-              <TextField.Root name="email" placeholder={t("filters.emailPlaceholder")} defaultValue={filters.email ?? ""}>
-                <TextField.Slot>
-                  <MagnifyingGlassIcon />
-                </TextField.Slot>
-              </TextField.Root>
-            </Field>
+            <TextInput
+              label={t("filters.email")}
+              value={email}
+              onChange={(value) => setEmail(value)}
+              placeholder={t("filters.emailPlaceholder")}
+              startIcon={<Icon icon={Search} size="sm" color="secondary" />}
+              htmlName="email"
+            />
           )}
-          <Flex gap="2">
-            <Button type="submit">{t("common.apply")}</Button>
-            <Button asChild variant="outline" color="gray" highContrast>
-              <Link to={location.pathname}>{t("common.reset")}</Link>
-            </Button>
-          </Flex>
-        </Flex>
+          <HStack gap={2}>
+            <Button type="submit" variant="primary" label={t("common.apply")} />
+            <Button variant="secondary" label={t("common.reset")} href={location.pathname} />
+          </HStack>
+        </HStack>
       </Form>
     </Card>
   );

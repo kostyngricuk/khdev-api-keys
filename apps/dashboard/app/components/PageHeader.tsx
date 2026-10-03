@@ -1,17 +1,18 @@
-import { Flex, Heading, Text } from "@radix-ui/themes";
+import { HStack, Heading, Text, VStack } from "@astryxdesign/core";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: React.ReactNode }) {
   return (
-    <Flex justify="between" align="start" gap="4" mb="4" wrap="wrap">
-      <Flex direction="column" gap="1">
-        <Heading size="6">{title}</Heading>
+    <HStack justify="between" vAlign="start" gap={3} wrap="wrap" style={{ marginBottom: 16 }}>
+      <VStack gap={0.5}>
+        {/* level 1 = 24px, the old Radix size="6" page title (and its default <h1>). */}
+        <Heading level={1}>{title}</Heading>
         {description && (
-          <Text size="2" color="gray">
+          <Text size="sm" color="secondary">
             {description}
           </Text>
         )}
-      </Flex>
+      </VStack>
       {actions}
-    </Flex>
+    </HStack>
   );
 }

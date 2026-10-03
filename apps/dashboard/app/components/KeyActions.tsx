@@ -1,5 +1,16 @@
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { AlertDialog, Button, Dialog, DropdownMenu, Flex, IconButton, Text, TextField } from "@radix-ui/themes";
+import {
+  AlertDialog,
+  Button,
+  Dialog,
+  DialogHeader,
+  DropdownMenu,
+  HStack,
+  Icon,
+  NumberInput,
+  VStack,
+  type DropdownMenuOption,
+} from "@astryxdesign/core";
+import { MoreHorizontal } from "lucide-react";
 import type { CustomerKey } from "@khdev/contracts";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -18,94 +29,85 @@ export function KeyActions({ keyItem, canEditLimit = false }: Props) {
   const fetcher = useFetcher<ActionResult>();
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
+  const [limit, setLimit] = useState(keyItem.activationLimit);
   useActionToast(fetcher.data, () => setLimitOpen(false));
   const busy = fetcher.state !== "idle";
 
   const submit = (intent: string, extra: Record<string, string> = {}) =>
     fetcher.submit({ intent, id: keyItem.id, ...extra }, { method: "post" });
 
+  const items: DropdownMenuOption[] = [
+    ...(keyItem.status === "expired"
+      ? [{ label: t("keyActions.extend"), onClick: () => submit("extend") }]
+      : [
+          { label: t("keyActions.regenerate"), onClick: () => setConfirmRegenerate(true) },
+          keyItem.status === "active"
+            ? { label: t("keyActions.deactivate"), onClick: () => submit("status", { status: "inactive" }) }
+            : { label: t("keyActions.activate"), onClick: () => submit("status", { status: "active" }) },
+        ]),
+    ...(canEditLimit
+      ? ([{ type: "divider" }, { label: t("keyActions.changeLimit"), onClick: () => setLimitOpen(true) }] as DropdownMenuOption[])
+      : []),
+  ];
+
   return (
     <>
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger>
-          <IconButton variant="ghost" color="gray" aria-label={t("keyActions.menu")} loading={busy}>
-            <DotsHorizontalIcon />
-          </IconButton>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content align="end">
-          {keyItem.status === "expired" ? (
-            <DropdownMenu.Item onSelect={() => submit("extend")}>{t("keyActions.extend")}</DropdownMenu.Item>
-          ) : (
-            <>
-              <DropdownMenu.Item onSelect={() => setConfirmRegenerate(true)}>{t("keyActions.regenerate")}</DropdownMenu.Item>
-              {keyItem.status === "active" ? (
-                <DropdownMenu.Item onSelect={() => submit("status", { status: "inactive" })}>{t("keyActions.deactivate")}</DropdownMenu.Item>
-              ) : (
-                <DropdownMenu.Item onSelect={() => submit("status", { status: "active" })}>{t("keyActions.activate")}</DropdownMenu.Item>
-              )}
-            </>
-          )}
-          {canEditLimit && (
-            <>
-              <DropdownMenu.Separator />
-              <DropdownMenu.Item onSelect={() => setLimitOpen(true)}>{t("keyActions.changeLimit")}</DropdownMenu.Item>
-            </>
-          )}
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
+      <DropdownMenu
+        button={{
+          label: t("keyActions.menu"),
+          icon: <Icon icon={MoreHorizontal} size="sm" color="inherit" />,
+          variant: "ghost",
+          size: "sm",
+          isIconOnly: true,
+          isLoading: busy,
+        }}
+        hasChevron={false}
+        placement="below"
+        alignment="end"
+        items={items}
+      />
 
-      <AlertDialog.Root open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
-        <AlertDialog.Content maxWidth="440px">
-          <AlertDialog.Title>{t("keyActions.regenerateTitle")}</AlertDialog.Title>
-          <AlertDialog.Description size="2">
-            {t("keyActions.regenerateText", { limit: keyItem.activationLimit })}
-          </AlertDialog.Description>
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel>
-              <Button variant="outline" color="gray" highContrast>
-                {t("common.cancel")}
-              </Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button color="red" onClick={() => submit("regenerate")}>
-                {t("keyActions.regenerate")}
-              </Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+      <AlertDialog
+        isOpen={confirmRegenerate}
+        onOpenChange={setConfirmRegenerate}
+        title={t("keyActions.regenerateTitle")}
+        description={t("keyActions.regenerateText", { limit: keyItem.activationLimit })}
+        cancelLabel={t("common.cancel")}
+        actionLabel={t("keyActions.regenerate")}
+        onAction={() => {
+          setConfirmRegenerate(false);
+          submit("regenerate");
+        }}
+        width={440}
+      />
 
       {canEditLimit && (
-        <Dialog.Root open={limitOpen} onOpenChange={setLimitOpen}>
-          <Dialog.Content maxWidth="400px">
-            <Dialog.Title>{t("keyActions.limitTitle")}</Dialog.Title>
-            <Dialog.Description size="2" mb="3">
-              {t("keyActions.limitText", { used: keyItem.activationsUsed })}
-            </Dialog.Description>
-            <fetcher.Form method="post">
-              <input type="hidden" name="intent" value="limit" />
-              <input type="hidden" name="id" value={keyItem.id} />
-              <Flex direction="column" gap="3">
-                <label>
-                  <Text as="div" size="2" mb="1" weight="medium">
-                    {t("keyActions.limitLabel")}
-                  </Text>
-                  <TextField.Root name="limit" type="number" min={1} max={100} required defaultValue={keyItem.activationLimit} />
-                </label>
-                <Flex gap="3" justify="end">
-                  <Dialog.Close>
-                    <Button variant="outline" color="gray" highContrast type="button">
-                      {t("common.cancel")}
-                    </Button>
-                  </Dialog.Close>
-                  <Button type="submit" loading={busy}>
-                    {t("common.save")}
-                  </Button>
-                </Flex>
-              </Flex>
-            </fetcher.Form>
-          </Dialog.Content>
-        </Dialog.Root>
+        <Dialog isOpen={limitOpen} onOpenChange={setLimitOpen} width={400}>
+          <DialogHeader
+            title={t("keyActions.limitTitle")}
+            subtitle={t("keyActions.limitText", { used: keyItem.activationsUsed })}
+            onOpenChange={setLimitOpen}
+          />
+          <fetcher.Form method="post">
+            <input type="hidden" name="intent" value="limit" />
+            <input type="hidden" name="id" value={keyItem.id} />
+            <VStack gap={3}>
+              <NumberInput
+                label={t("keyActions.limitLabel")}
+                value={limit ?? undefined}
+                onChange={(value) => setLimit(value)}
+                min={1}
+                max={100}
+                isRequired
+                htmlName="limit"
+              />
+              <HStack gap={2} justify="end">
+                <Button variant="secondary" type="button" label={t("common.cancel")} onClick={() => setLimitOpen(false)} />
+                <Button type="submit" variant="primary" isLoading={busy} label={t("common.save")} />
+              </HStack>
+            </VStack>
+          </fetcher.Form>
+        </Dialog>
       )}
     </>
   );

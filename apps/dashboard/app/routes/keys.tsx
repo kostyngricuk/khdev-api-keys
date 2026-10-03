@@ -1,6 +1,21 @@
-import { ExternalLinkIcon, PlusIcon } from "@radix-ui/react-icons";
-import { Button, Card, Dialog, Flex, Table, Text } from "@radix-ui/themes";
+import {
+  Button,
+  Card,
+  ClickableCard,
+  Dialog,
+  DialogHeader,
+  HStack,
+  Icon,
+  pixel,
+  proportional,
+  Table,
+  Text,
+  VStack,
+  type TableColumn,
+} from "@astryxdesign/core";
+import { ExternalLink, Plus } from "lucide-react";
 import { KEY_STATUSES, type CustomerKey, type Paginated, type Platform, type Solution } from "@khdev/contracts";
+import { useState } from "react";
 import { CopyButton } from "~/components/CopyButton";
 import { EmptyState } from "~/components/EmptyState";
 import { Filters } from "~/components/Filters";
@@ -39,121 +54,105 @@ export async function action({ request }: Route.ActionArgs) {
 
 function GetKeyDialog({ solutions, storeUrls }: { solutions: Solution[]; storeUrls: Record<Platform, string> }) {
   const { t, solutionName } = useI18n();
+  const [open, setOpen] = useState(false);
   return (
-    <Dialog.Root>
-      <Dialog.Trigger>
-        <Button>
-          <PlusIcon /> {t("keys.getNewKey")}
-        </Button>
-      </Dialog.Trigger>
-      <Dialog.Content maxWidth="460px">
-        <Dialog.Title>{t("keys.getNewKey")}</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
-          {t("keys.getNewKeyDescription")}
-        </Dialog.Description>
-        <Flex direction="column" gap="2">
+    <>
+      <Button
+        variant="primary"
+        icon={<Icon icon={Plus} size="sm" color="inherit" />}
+        label={t("keys.getNewKey")}
+        onClick={() => setOpen(true)}
+      />
+      <Dialog isOpen={open} onOpenChange={setOpen} width={460}>
+        <DialogHeader title={t("keys.getNewKey")} subtitle={t("keys.getNewKeyDescription")} onOpenChange={setOpen} />
+        <VStack gap={2}>
           {solutions.map((solution) => (
-            <Card key={solution.slug} asChild>
-              <a
-                href={solution.storeUrl ?? storeUrls[solution.platform]}
-                target="_blank"
-                rel="noreferrer"
-                style={{ textDecoration: "none" }}
-              >
-                <Flex justify="between" align="center" gap="3">
-                  <Flex align="center" gap="2">
-                    <PlatformIcon platform={solution.platform} size={24} focusable={false} />
-                    <Text size="2" weight="medium">
-                      {solutionName(solution)}
-                    </Text>
-                  </Flex>
-                  <Flex align="center" gap="1">
-                    <Text size="2" color="gray">
-                      {t("keys.openStore")}
-                    </Text>
-                    <ExternalLinkIcon color="var(--gray-9)" />
-                  </Flex>
-                </Flex>
-              </a>
-            </Card>
+            <ClickableCard
+              key={solution.slug}
+              label={`${solutionName(solution)} — ${t("keys.openStore")}`}
+              href={solution.storeUrl ?? storeUrls[solution.platform]}
+              target="_blank"
+            >
+              <HStack justify="between" vAlign="center">
+                <HStack gap={2} vAlign="center">
+                  <PlatformIcon platform={solution.platform} size={24} focusable={false} />
+                  <Text size="sm" weight="medium">
+                    {solutionName(solution)}
+                  </Text>
+                </HStack>
+                <HStack gap={1} vAlign="center">
+                  <Text size="sm" color="secondary">
+                    {t("keys.openStore")}
+                  </Text>
+                  <Icon icon={ExternalLink} size="xsm" color="disabled" />
+                </HStack>
+              </HStack>
+            </ClickableCard>
           ))}
-        </Flex>
-        <Flex justify="end" mt="4">
-          <Dialog.Close>
-            <Button variant="outline" color="gray" highContrast>
-              {t("common.close")}
-            </Button>
-          </Dialog.Close>
-        </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
+        </VStack>
+        <HStack justify="end" style={{ marginTop: 16 }}>
+          <Button variant="secondary" label={t("common.close")} onClick={() => setOpen(false)} />
+        </HStack>
+      </Dialog>
+    </>
   );
 }
 
-function KeyRow({ item }: { item: CustomerKey }) {
-  return (
-    <Table.Row align="center">
-      <Table.RowHeaderCell>
-        <Flex align="center" gap="2">
-          <Text size="2" className="key-mono">
+// Data-driven columns: Astryx cells cap their width (max-width: 0), so only `columns[].width`
+// sizes them — in children mode every column gets an equal share and the solution name clips.
+function useKeyColumns(): TableColumn<CustomerKey>[] {
+  const { t } = useI18n();
+  return [
+    {
+      key: "key",
+      header: t("keys.colKey"),
+      width: proportional(1, { minWidth: 170 }),
+      renderCell: (item) => (
+        <HStack gap={2} vAlign="center">
+          <Text size="sm" className="key-mono">
             {maskKey(item.key)}
           </Text>
           <CopyButton value={item.key} />
-        </Flex>
-      </Table.RowHeaderCell>
-      <Table.Cell>
-        <SolutionLabel solution={item.solution} platform={item.platform} />
-      </Table.Cell>
-      <Table.Cell>
-        <KeyStatusBadge status={item.status} />
-      </Table.Cell>
-      <Table.Cell>
-        <Text color={item.activationsUsed >= item.activationLimit ? "amber" : undefined}>
+        </HStack>
+      ),
+    },
+    {
+      key: "solution",
+      header: t("keys.colSolution"),
+      width: proportional(1.5, { minWidth: 200 }),
+      renderCell: (item) => <SolutionLabel solution={item.solution} platform={item.platform} />,
+    },
+    { key: "status", header: t("keys.colStatus"), width: pixel(130), renderCell: (item) => <KeyStatusBadge status={item.status} /> },
+    {
+      key: "activations",
+      header: t("keys.colActivations"),
+      width: pixel(110),
+      renderCell: (item) => (
+        // Astryx Text has no amber/warning color; the theme's warning token keeps the old signal.
+        <Text size="sm" style={item.activationsUsed >= item.activationLimit ? { color: "var(--color-warning)" } : undefined}>
           {item.activationsUsed} / {item.activationLimit}
         </Text>
-      </Table.Cell>
-      <Table.Cell>{formatDate(item.createdAt)}</Table.Cell>
-      <Table.Cell>{formatDate(item.expiresAt)}</Table.Cell>
-      <Table.Cell justify="end">
-        <KeyActions keyItem={item} />
-      </Table.Cell>
-    </Table.Row>
-  );
+      ),
+    },
+    { key: "createdAt", header: t("keys.colCreated"), width: pixel(110), renderCell: (item) => formatDate(item.createdAt) },
+    { key: "expiresAt", header: t("keys.colExpires"), width: pixel(130), renderCell: (item) => formatDate(item.expiresAt) },
+    { key: "actions", header: "", width: pixel(56), align: "end", renderCell: (item) => <KeyActions keyItem={item} /> },
+  ];
 }
 
 export default function KeysPage({ loaderData }: Route.ComponentProps) {
   const { t } = useI18n();
   const { keys, filters, solutions, storeUrls } = loaderData;
+  const columns = useKeyColumns();
   return (
     <>
-      <PageHeader
-        title={t("keys.title")}
-        description={t("keys.description")}
-        actions={<GetKeyDialog solutions={solutions} storeUrls={storeUrls} />}
-      />
+      <PageHeader title={t("keys.title")} description={t("keys.description")} actions={<GetKeyDialog solutions={solutions} storeUrls={storeUrls} />} />
       <Filters filters={filters} statuses={KEY_STATUSES} solutions={solutions} />
       <Card>
         {keys.items.length === 0 ? (
           <EmptyState title={t("keys.emptyTitle")} hint={t("keys.emptyHint")} />
         ) : (
-          <Table.Root>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeaderCell>{t("keys.colKey")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>{t("keys.colSolution")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>{t("keys.colStatus")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>{t("keys.colActivations")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>{t("keys.colCreated")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>{t("keys.colExpires")}</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell />
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {keys.items.map((item) => (
-                <KeyRow key={item.id} item={item} />
-              ))}
-            </Table.Body>
-          </Table.Root>
+          <Table data={keys.items} columns={columns} idKey="id" />
         )}
       </Card>
       <Pagination total={keys.total} page={keys.page} pageSize={keys.pageSize} />

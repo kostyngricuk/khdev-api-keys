@@ -1,8 +1,12 @@
 import "@radix-ui/themes/styles.css";
+// Astryx components assume this baseline (border-box sizing, zeroed margins); it sits in
+// @layer reset, so unlayered Radix and app styles still win during coexistence.
+import "@astryxdesign/core/reset.css";
 import "./app.css";
 import "./theme/khdev.css";
 
-import { LinkProvider, Theme as AstryxTheme } from "@astryxdesign/core";
+import { InternationalizationProvider, LayerProvider, LinkProvider, Theme as AstryxTheme } from "@astryxdesign/core";
+import astryxRu from "@astryxdesign/core/locales/ru-RU.json";
 import { Box, Button, Card, Code, Flex, Heading, Text, Theme } from "@radix-ui/themes";
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteLoaderData } from "react-router";
 import { DEFAULT_LOCALE, localeFromCookie } from "~/i18n";
@@ -19,6 +23,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export const meta: Route.MetaFunction = ({ matches }) => appTitle(matches);
 
+// Astryx's built-in strings (placeholders, aria labels, "Skip to content") follow the app locale;
+// "en" is the catalog Astryx always ships.
+const ASTRYX_MESSAGES = { ru: astryxRu };
+
 export const links: Route.LinksFunction = () => [{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -29,8 +37,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Pin the cascade order before any stylesheet loads: Astryx's reset/theme layers rank
+            below StyleX's priority* layers. Builds get this order from root.css; in dev the StyleX
+            <style> can be injected before Vite's CSS and would otherwise invert it. */}
+        <style>{"@layer reset, astryx-base, astryx-theme;"}</style>
         <Meta />
         <Links />
+        {/* Dev only: the StyleX plugin serves collected CSS at /virtual:stylex.css but links it via
+            transformIndexHtml, which React Router SSR never calls. The runtime refetches it on HMR
+            (and disables this link, hence suppressHydrationWarning). Builds append it to root.css. */}
+        {import.meta.env.DEV && (
+          <>
+            <link rel="stylesheet" href="/virtual:stylex.css" suppressHydrationWarning />
+            <script type="module" src="/@id/virtual:stylex:runtime" />
+          </>
+        )}
       </head>
       <body>
         <I18nProvider locale={locale}>
@@ -39,7 +60,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Astryx coexists inside Radix until Task 7 removes Radix. mode="light" pins
                 color-scheme so light-dark() tokens never resolve to their dark branch. */}
             <AstryxTheme theme={khdevTheme} mode="light">
-              <LinkProvider component={RouterLink}>{children}</LinkProvider>
+              <InternationalizationProvider locale={locale} messages={ASTRYX_MESSAGES}>
+                {/* AppShell does not provide this yet (Astryx 0.6.x); without it useToast mounts a
+                    fallback root outside the theme and i18n scope. */}
+                <LayerProvider>
+                  <LinkProvider component={RouterLink}>{children}</LinkProvider>
+                </LayerProvider>
+              </InternationalizationProvider>
             </AstryxTheme>
           </Theme>
         </I18nProvider>

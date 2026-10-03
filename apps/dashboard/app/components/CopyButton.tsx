@@ -1,5 +1,5 @@
-import { CheckIcon, CopyIcon } from "@radix-ui/react-icons";
-import { IconButton, Tooltip } from "@radix-ui/themes";
+import { Icon, IconButton, Tooltip } from "@astryxdesign/core";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "~/i18n/context";
 
@@ -9,18 +9,16 @@ export function CopyButton({ value }: { value: string }) {
   return (
     <Tooltip content={copied ? t("keys.copied") : t("keys.copy")}>
       <IconButton
-        size="1"
+        label={t("keys.copy")}
         variant="ghost"
-        color={copied ? "green" : "gray"}
-        aria-label={t("keys.copy")}
+        size="sm"
+        icon={<Icon icon={copied ? Check : Copy} size="sm" color={copied ? "success" : "inherit"} />}
         onClick={async () => {
           await navigator.clipboard.writeText(value);
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         }}
-      >
-        {copied ? <CheckIcon /> : <CopyIcon />}
-      </IconButton>
+      />
     </Tooltip>
   );
 }

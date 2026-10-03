@@ -1,4 +1,4 @@
-import { Tooltip } from "@radix-ui/themes";
+import { Tooltip } from "@astryxdesign/core";
 import type { Platform } from "@khdev/contracts";
 import { useI18n } from "~/i18n/context";
 import { PLATFORM_COLORS } from "~/lib/colors";
